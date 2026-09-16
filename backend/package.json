@@ -1,0 +1,51 @@
+{
+  "name": "swapwear-backend",
+  "version": "1.0.0",
+  "description": "SwapWear Backend API - Phase 1",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "db:start": "ts-node scripts/start-db.ts",
+    "test": "jest --runInBand --detectOpenHandles --forceExit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@embedded-postgres/windows-x64": "^18.4.0-beta.17",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.10.1",
+    "@types/supertest": "^6.0.2",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "pg": "^8.13.1",
+    "prisma": "^5.22.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.2"
+  }
+}

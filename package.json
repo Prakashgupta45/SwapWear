@@ -1,0 +1,24 @@
+{
+  "name": "swapwear-marketplace",
+  "version": "1.0.0",
+  "description": "Production Clothing Exchange & Swap Marketplace - Phase 1",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "test:backend": "npm --prefix backend test",
+    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint"
+  },
+  "keywords": [
+    "clothing-exchange",
+    "swap-marketplace",
+    "sustainable-fashion"
+  ],
+  "author": "",
+  "license": "ISC"
+}
