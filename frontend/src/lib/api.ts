@@ -1,4 +1,11 @@
 import { AuthResponse, User } from '../types/auth';
+import { ProfileResponse, UserProfile } from '../types/profile';
+import {
+  ClothingListing,
+  ListingDetailResponse,
+  MyListingsResponse,
+  PaginatedListingsResponse,
+} from '../types/listing';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -29,6 +36,8 @@ class ApiClient {
     return data as T;
   }
 
+  // ── Auth APIs ─────────────────────────────────────────────────────────────
+
   async register(data: { name: string; email: string; password: string }): Promise<AuthResponse> {
     return this.request<AuthResponse>('/auth/register', {
       method: 'POST',
@@ -52,6 +61,89 @@ class ApiClient {
   async getCurrentUser(): Promise<{ success: boolean; data: { user: User } }> {
     return this.request<{ success: boolean; data: { user: User } }>('/auth/me', {
       method: 'GET',
+    });
+  }
+
+  // ── Profile APIs (Phase 2) ────────────────────────────────────────────────
+
+  async getProfile(): Promise<ProfileResponse> {
+    return this.request<ProfileResponse>('/profile', {
+      method: 'GET',
+    });
+  }
+
+  async updateProfile(data: {
+    name?: string;
+    bio?: string | null;
+    city?: string | null;
+    state?: string | null;
+    pincode?: string | null;
+  }): Promise<ProfileResponse> {
+    return this.request<ProfileResponse>('/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ── Listing APIs (Phase 2) ────────────────────────────────────────────────
+
+  async getListings(page = 1, pageSize = 20): Promise<PaginatedListingsResponse> {
+    return this.request<PaginatedListingsResponse>(`/listings?page=${page}&pageSize=${pageSize}`, {
+      method: 'GET',
+    });
+  }
+
+  async getMyListings(): Promise<MyListingsResponse> {
+    return this.request<MyListingsResponse>('/listings/my', {
+      method: 'GET',
+    });
+  }
+
+  async getListingById(id: string): Promise<ListingDetailResponse> {
+    return this.request<ListingDetailResponse>(`/listings/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async createListing(data: {
+    title: string;
+    description?: string;
+    category: string;
+    brand?: string;
+    size: string;
+    condition: string;
+    estimatedSwapValue?: number;
+    imageUrls?: string[];
+  }): Promise<ListingDetailResponse> {
+    return this.request<ListingDetailResponse>('/listings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateListing(
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      category?: string;
+      brand?: string;
+      size?: string;
+      condition?: string;
+      estimatedSwapValue?: number;
+      status?: string;
+      imageUrls?: string[];
+    }
+  ): Promise<ListingDetailResponse> {
+    return this.request<ListingDetailResponse>(`/listings/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteListing(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/listings/${id}`, {
+      method: 'DELETE',
     });
   }
 }

@@ -7,10 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Auth enums ──────────────────────────────────────────────────────────────
+
 enum Role {
   USER
   ADMIN
 }
+
+// ─── Listing enums ────────────────────────────────────────────────────────────
+
+enum Category {
+  TOPWEAR
+  BOTTOMWEAR
+  DRESS
+  OUTERWEAR
+  FOOTWEAR
+  ACCESSORIES
+}
+
+enum Condition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+}
+
+enum ListingStatus {
+  AVAILABLE
+  RESERVED
+  SWAPPED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
   id           String   @id @default(uuid())
@@ -18,10 +46,52 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role     @default(USER)
+  // Profile fields (Phase 2)
+  bio          String?
+  city         String?
+  state        String?
+  pincode      String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  listings     ClothingListing[]
 
   @@index([email])
   @@index([role])
   @@map("users")
+}
+
+model ClothingListing {
+  id                 String        @id @default(uuid())
+  ownerId            String
+  title              String
+  description        String?
+  category           Category
+  brand              String?
+  size               String
+  condition          Condition
+  estimatedSwapValue Float?
+  status             ListingStatus @default(AVAILABLE)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  owner  User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  images ClothingImage[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([category])
+  @@map("clothing_listings")
+}
+
+model ClothingImage {
+  id        String   @id @default(uuid())
+  listingId String
+  imageUrl  String
+  createdAt DateTime @default(now())
+
+  listing ClothingListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@map("clothing_images")
 }
