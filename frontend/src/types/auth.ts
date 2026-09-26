@@ -5,6 +5,10 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  bio?: string | null;
+  city?: string | null;
+  state?: string | null;
+  pincode?: string | null;
   createdAt: string;
   updatedAt: string;
 }

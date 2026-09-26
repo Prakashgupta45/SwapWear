@@ -11,7 +11,7 @@
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "db:start": "ts-node scripts/start-db.ts",
+    "db:start": "ts-node --transpile-only scripts/start-db.ts",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "lint": "eslint src --ext .ts"
   },

@@ -1,6 +1,9 @@
 import path from 'path';
+import fs from 'fs';
 // @ts-ignore
 import EmbeddedPostgres from 'embedded-postgres';
+// @ts-ignore
+import { Client } from 'pg';
 
 const dbPath = path.resolve(__dirname, '../.db-data');
 const port = 5432;
@@ -17,8 +20,31 @@ async function start() {
     persistent: true,
   });
 
-  await pg.initialise();
+  const isInitialized = fs.existsSync(path.join(dbPath, 'PG_VERSION'));
+  if (!isInitialized) {
+    console.log('Initializing database cluster...');
+    await pg.initialise();
+  } else {
+    console.log('Database cluster already initialized.');
+  }
+
   await pg.start();
+
+  // Set password for postgres superuser to match DATABASE_URL
+  try {
+    const client = new Client({
+      host: 'localhost',
+      port,
+      user: 'postgres',
+      database: 'postgres',
+    });
+    await client.connect();
+    await client.query("ALTER USER postgres WITH PASSWORD 'postgrespassword';");
+    await client.end();
+    console.log('PostgreSQL superuser password updated.');
+  } catch (err: any) {
+    console.log('Notice configuring postgres password:', err.message);
+  }
 
   // Create database if not exists
   try {
