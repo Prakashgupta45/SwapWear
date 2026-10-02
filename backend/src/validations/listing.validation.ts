@@ -22,6 +22,7 @@ export const createListingSchema = z.object({
     .max(100, 'Brand cannot exceed 100 characters')
     .optional()
     .nullable(),
+  color: z.string().trim().max(80, 'Color cannot exceed 80 characters').optional().nullable(),
   size: z
     .string({ required_error: 'Size is required' })
     .trim()
@@ -64,6 +65,7 @@ export const updateListingSchema = z.object({
     .max(100, 'Brand cannot exceed 100 characters')
     .optional()
     .nullable(),
+  color: z.string().trim().max(80, 'Color cannot exceed 80 characters').optional().nullable(),
   size: z
     .string()
     .trim()

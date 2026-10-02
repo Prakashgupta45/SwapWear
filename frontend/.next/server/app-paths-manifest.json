@@ -1,11 +1,9 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/listings/[id]/page": "app/listings/[id]/page.js",
-  "/listings/new/page": "app/listings/new/page.js",
-  "/page": "app/page.js",
-  "/my-listings/page": "app/my-listings/page.js",
-  "/profile/page": "app/profile/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/login/page": "app/login/page.js",
-  "/register/page": "app/register/page.js"
+  "/profile/page": "app/profile/page.js",
+  "/marketplace/page": "app/marketplace/page.js",
+  "/listings/new/page": "app/listings/new/page.js",
+  "/my-listings/page": "app/my-listings/page.js",
+  "/login/page": "app/login/page.js"
 }

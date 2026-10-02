@@ -11,6 +11,7 @@ const LISTING_SELECT = {
     description: true,
     category: true,
     brand: true,
+    color: true,
     size: true,
     condition: true,
     estimatedSwapValue: true,
@@ -25,12 +26,19 @@ const LISTING_SELECT = {
         select: { id: true, name: true, city: true, state: true },
     },
 };
+const CATEGORY_SEARCH_TERMS = {
+    TOPWEAR: ['topwear', 'tops', 'shirt', 'shirts'],
+    BOTTOMWEAR: ['bottomwear', 'bottoms', 'pants', 'jeans'],
+    DRESS: ['dress', 'dresses'],
+    OUTERWEAR: ['outerwear', 'jacket', 'jackets', 'coat', 'coats'],
+    FOOTWEAR: ['footwear', 'shoe', 'shoes', 'sneakers', 'boots'],
+    ACCESSORIES: ['accessory', 'accessories', 'bag', 'bags'],
+};
 class ListingService {
     /**
      * Create a new clothing listing for the authenticated user
      */
     static async createListing(ownerId, input) {
-        // Validate and process image URLs
         const processedUrls = await ListingService.processImageUrls(input.imageUrls ?? []);
         const listing = await prisma_1.prisma.clothingListing.create({
             data: {
@@ -39,6 +47,7 @@ class ListingService {
                 description: input.description ?? null,
                 category: input.category,
                 brand: input.brand ?? null,
+                color: input.color ?? null,
                 size: input.size,
                 condition: input.condition,
                 estimatedSwapValue: input.estimatedSwapValue ?? null,
@@ -51,19 +60,91 @@ class ListingService {
         return listing;
     }
     /**
-     * Get paginated listing results
+     * Get paginated and filtered listing results
      */
-    static async getListings(page = 1, pageSize = 20) {
+    static async getListings(params = {}) {
+        const requestedPage = params.page ?? 1;
+        const requestedPageSize = params.pageSize ?? params.limit ?? 12;
+        const page = Number.isFinite(requestedPage) ? Math.max(1, Math.floor(requestedPage)) : 1;
+        const pageSize = Number.isFinite(requestedPageSize)
+            ? Math.min(100, Math.max(1, Math.floor(requestedPageSize)))
+            : 12;
         const skip = (page - 1) * pageSize;
+        const where = {};
+        // Keep public browsing available-only by default; ALL opts into every status.
+        if (params.status !== 'ALL')
+            where.status = params.status || 'AVAILABLE';
+        // Search query across title, description, and brand
+        if (params.search && params.search.trim()) {
+            const q = params.search.trim();
+            where.OR = [
+                { title: { contains: q, mode: 'insensitive' } },
+                { description: { contains: q, mode: 'insensitive' } },
+                { brand: { contains: q, mode: 'insensitive' } },
+            ];
+            const matchingCategories = Object.entries(CATEGORY_SEARCH_TERMS)
+                .filter(([, terms]) => terms.some((term) => q.toLowerCase().includes(term)))
+                .map(([category]) => category);
+            if (matchingCategories.length > 0) {
+                where.OR.push({ category: { in: matchingCategories } });
+            }
+        }
+        // Category filter
+        if (params.category) {
+            where.category = params.category;
+        }
+        // Brand filter
+        if (params.brand && params.brand.trim()) {
+            where.brand = { contains: params.brand.trim(), mode: 'insensitive' };
+        }
+        // Size filter
+        if (params.size && params.size.trim()) {
+            where.size = { equals: params.size.trim(), mode: 'insensitive' };
+        }
+        // Condition filter
+        if (params.condition) {
+            where.condition = params.condition;
+        }
+        // Value range filter (minValue / maxValue)
+        if (params.minValue !== undefined || params.maxValue !== undefined) {
+            where.estimatedSwapValue = {};
+            if (params.minValue !== undefined && !isNaN(params.minValue)) {
+                where.estimatedSwapValue.gte = params.minValue;
+            }
+            if (params.maxValue !== undefined && !isNaN(params.maxValue)) {
+                where.estimatedSwapValue.lte = params.maxValue;
+            }
+        }
+        // Location filter (city or state of owner)
+        if (params.location && params.location.trim()) {
+            const loc = params.location.trim();
+            where.owner = {
+                OR: [
+                    { city: { contains: loc, mode: 'insensitive' } },
+                    { state: { contains: loc, mode: 'insensitive' } },
+                ],
+            };
+        }
+        // Sort order
+        let orderBy = { createdAt: 'desc' };
+        if (params.sort === 'price_asc') {
+            orderBy = { estimatedSwapValue: 'asc' };
+        }
+        else if (params.sort === 'price_desc') {
+            orderBy = { estimatedSwapValue: 'desc' };
+        }
+        else if (params.sort === 'newest') {
+            orderBy = { createdAt: 'desc' };
+        }
         const [data, total] = await prisma_1.prisma.$transaction([
             prisma_1.prisma.clothingListing.findMany({
-                where: { status: 'AVAILABLE' },
+                where,
                 skip,
                 take: pageSize,
-                orderBy: { createdAt: 'desc' },
+                orderBy,
                 select: LISTING_SELECT,
             }),
-            prisma_1.prisma.clothingListing.count({ where: { status: 'AVAILABLE' } }),
+            prisma_1.prisma.clothingListing.count({ where }),
         ]);
         return {
             data: data,
@@ -111,7 +192,6 @@ class ListingService {
         if (existing.ownerId !== requestingUserId) {
             throw new auth_service_1.AppError('Forbidden: You do not own this listing.', 403);
         }
-        // Handle image updates if provided
         const data = {};
         if (input.title !== undefined)
             data['title'] = input.title;
@@ -121,6 +201,8 @@ class ListingService {
             data['category'] = input.category;
         if (input.brand !== undefined)
             data['brand'] = input.brand;
+        if (input.color !== undefined)
+            data['color'] = input.color;
         if (input.size !== undefined)
             data['size'] = input.size;
         if (input.condition !== undefined)
@@ -129,10 +211,8 @@ class ListingService {
             data['estimatedSwapValue'] = input.estimatedSwapValue;
         if (input.status !== undefined)
             data['status'] = input.status;
-        // If images are provided, replace all existing images
         if (input.imageUrls !== undefined) {
             const processedUrls = await ListingService.processImageUrls(input.imageUrls);
-            // Delete existing images and recreate
             await prisma_1.prisma.clothingImage.deleteMany({ where: { listingId: id } });
             data['images'] = {
                 create: processedUrls.map((url) => ({ imageUrl: url })),

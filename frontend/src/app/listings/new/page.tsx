@@ -21,6 +21,7 @@ export default function NewListingPage() {
     description: '',
     category: 'TOPWEAR',
     brand: '',
+    color: '',
     size: 'M',
     condition: 'GOOD',
     estimatedSwapValue: '',
@@ -67,6 +68,7 @@ export default function NewListingPage() {
         description: formData.description || undefined,
         category: formData.category,
         brand: formData.brand || undefined,
+        color: formData.color || undefined,
         size: formData.size,
         condition: formData.condition,
         estimatedSwapValue: formData.estimatedSwapValue ? parseFloat(formData.estimatedSwapValue) : undefined,
@@ -161,7 +163,7 @@ export default function NewListingPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="brand">Brand</Label>
                   <Input
@@ -171,6 +173,19 @@ export default function NewListingPage() {
                     value={formData.brand}
                     onChange={handleChange}
                     error={fieldErrors.brand}
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="color">Color</Label>
+                  <Input
+                    id="color"
+                    name="color"
+                    placeholder="e.g. Indigo, olive"
+                    value={formData.color}
+                    onChange={handleChange}
+                    error={fieldErrors.color}
                     disabled={isSubmitting}
                   />
                 </div>

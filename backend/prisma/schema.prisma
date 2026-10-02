@@ -68,6 +68,7 @@ model ClothingListing {
   description        String?
   category           Category
   brand              String?
+  color              String?
   size               String
   condition          Condition
   estimatedSwapValue Float?

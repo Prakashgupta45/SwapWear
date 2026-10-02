@@ -30,6 +30,7 @@ export interface ClothingListing {
   description: string | null;
   category: Category;
   brand: string | null;
+  color: string | null;
   size: string;
   condition: Condition;
   estimatedSwapValue: number | null;
@@ -49,6 +50,22 @@ export interface PaginatedListingsResponse {
     pageSize: number;
     totalPages: number;
   };
+}
+
+export interface ListingQueryParams {
+  search?: string;
+  category?: Category;
+  brand?: string;
+  size?: string;
+  condition?: Condition;
+  minValue?: number | string;
+  maxValue?: number | string;
+  location?: string;
+  status?: ListingStatus | 'ALL';
+  sort?: 'newest' | 'price_asc' | 'price_desc';
+  page?: number;
+  pageSize?: number;
+  limit?: number;
 }
 
 export interface ListingDetailResponse {

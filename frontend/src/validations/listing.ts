@@ -22,6 +22,7 @@ export const listingFormSchema = z.object({
     .max(100, 'Brand cannot exceed 100 characters')
     .optional()
     .or(z.literal('')),
+  color: z.string().trim().max(80, 'Color cannot exceed 80 characters').optional().or(z.literal('')),
   size: z.string().trim().min(1, 'Size is required').max(20),
   condition: z.enum(['NEW', 'LIKE_NEW', 'GOOD', 'FAIR'], {
     required_error: 'Please select item condition',

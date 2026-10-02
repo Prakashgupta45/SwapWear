@@ -1,1 +1,1 @@
-C:/Users/PRAKASH/Desktop/SwapWear/node_modules/@embedded-postgres/windows-x64/native/bin/postgres.exe "-D" "C:\Users\PRAKASH\Desktop\SwapWear\backend\.db-data" "-p" "5432"
+C:/Users/PRAKASH/Desktop/SwapWear/node_modules/@embedded-postgres/windows-x64/native/bin/postgres.exe "-D" "C:\Users\PRAKASH\Desktop\SwapWear\backend\.db-data" "-p" "5433"

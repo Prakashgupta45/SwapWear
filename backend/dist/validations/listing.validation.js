@@ -21,6 +21,7 @@ exports.createListingSchema = zod_1.z.object({
         .max(100, 'Brand cannot exceed 100 characters')
         .optional()
         .nullable(),
+    color: zod_1.z.string().trim().max(80, 'Color cannot exceed 80 characters').optional().nullable(),
     size: zod_1.z
         .string({ required_error: 'Size is required' })
         .trim()
@@ -62,6 +63,7 @@ exports.updateListingSchema = zod_1.z.object({
         .max(100, 'Brand cannot exceed 100 characters')
         .optional()
         .nullable(),
+    color: zod_1.z.string().trim().max(80, 'Color cannot exceed 80 characters').optional().nullable(),
     size: zod_1.z
         .string()
         .trim()

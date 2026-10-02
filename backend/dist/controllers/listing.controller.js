@@ -18,13 +18,29 @@ class ListingController {
     }
     /**
      * GET /api/listings
-     * Get paginated listings (public — shows AVAILABLE only)
+     * Get paginated and filtered listings
      */
     static async getListings(req, res, next) {
         try {
-            const page = Math.max(1, parseInt(req.query.page) || 1);
-            const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize) || 20));
-            const result = await listing_service_1.ListingService.getListings(page, pageSize);
+            const filterParams = {
+                search: (req.query.search || req.query.q),
+                category: req.query.category,
+                brand: req.query.brand,
+                size: req.query.size,
+                condition: req.query.condition,
+                minValue: req.query.minValue ? parseFloat(req.query.minValue) : undefined,
+                maxValue: req.query.maxValue ? parseFloat(req.query.maxValue) : undefined,
+                location: req.query.location,
+                status: req.query.status,
+                sort: req.query.sort,
+                page: req.query.page ? parseInt(req.query.page, 10) : 1,
+                pageSize: req.query.pageSize
+                    ? parseInt(req.query.pageSize, 10)
+                    : req.query.limit
+                        ? parseInt(req.query.limit, 10)
+                        : 12,
+            };
+            const result = await listing_service_1.ListingService.getListings(filterParams);
             res.status(200).json({ success: true, data: result });
         }
         catch (error) {
