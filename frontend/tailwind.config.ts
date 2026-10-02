@@ -54,7 +54,11 @@ const config: Config = {
           300: '#e6dcbe',
           400: '#d7c79e',
           500: '#c7b27f',
-        }
+        },
+      },
+      fontFamily: {
+        serif: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
+        sans: ['var(--font-inter)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
     },
   },

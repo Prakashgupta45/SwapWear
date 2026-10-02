@@ -6,64 +6,87 @@ import { api } from '../lib/api';
 import { ClothingListing } from '../types/listing';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { ListingCard } from '../components/ListingCard';
 import {
   ChevronLeft,
   ChevronRight,
-  Heart,
-  Shirt,
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  Package,
   RefreshCw,
-  MapPin,
-  Tag,
-  Loader2,
+  Zap,
 } from 'lucide-react';
 
-const HERO_SLIDES = [
+interface HeroSlide {
+  id: string;
+  image: string;
+  subtitle: string;
+  title: string;
+  description: string;
+  ctaText: string;
+  ctaLink: string;
+}
+
+const HERO_SLIDES: HeroSlide[] = [
   {
-    id: 1,
+    id: 'hero-1',
+    image: '/images/poshmark-hero-1.jpg',
+    subtitle: 'CURATED CLOSETS & TRENDS',
     title: 'Style Favors the Curious',
-    subtitle: 'Discover pre-loved fashion treasures and swap your wardrobe with zero waste.',
-    ctaText: 'Shop Women’s',
-    ctaLink: '/?category=DRESS',
-    image:
-      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop',
+    description: 'Explore pre-loved designer pieces, vintage gems, and everyday favorites.',
+    ctaText: "Shop Women's",
+    ctaLink: '/marketplace?department=women',
   },
   {
-    id: 2,
-    title: 'Circulate Your Closet',
-    subtitle: 'Turn unworn garments into fresh outfits through sustainable peer-to-peer exchange.',
-    ctaText: 'Explore Topwear',
-    ctaLink: '/?category=TOPWEAR',
-    image:
-      'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600&auto=format&fit=crop',
-  },
-  {
-    id: 3,
-    title: 'Curated Designer & Vintage',
-    subtitle: 'Explore authentic pre-owned jackets, boots, dresses, and sustainable accessories.',
-    ctaText: 'List an Item',
-    ctaLink: '/listings/new',
-    image:
-      'https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1600&auto=format&fit=crop',
+    id: 'hero-2',
+    image: '/images/poshmark-hero-2.jpg',
+    subtitle: 'NEW SEASON LOOKS',
+    title: 'Your Next Favorite Outfit',
+    description: 'Give great fashion a second life and discover one-of-a-kind styles.',
+    ctaText: 'Explore Swaps',
+    ctaLink: '/marketplace',
   },
 ];
 
-const QUICK_CATEGORIES = [
-  { name: 'Women', icon: '👗', href: '/?category=DRESS' },
-  { name: 'Topwear', icon: '👕', href: '/?category=TOPWEAR' },
-  { name: 'Bottomwear', icon: '👖', href: '/?category=BOTTOMWEAR' },
-  { name: 'Outerwear', icon: '🧥', href: '/?category=OUTERWEAR' },
-  { name: 'Footwear', icon: '👟', href: '/?category=FOOTWEAR' },
-  { name: 'Accessories', icon: '👜', href: '/?category=ACCESSORIES' },
+import { CURATED_SHOWCASE_LISTINGS } from '../lib/curatedListings';
+
+const POPULAR_BRANDS = [
+  'Nike',
+  'Lululemon',
+  'Zara',
+  'Reformation',
+  'Free People',
+  'Coach',
+  'Gucci',
+  "Levi's",
+  'Aritzia',
+  'Patagonia',
+  'Madewell',
+  'Chanel',
+];
+
+const DEPARTMENT_TILES = [
+  { name: 'Women', href: '/marketplace?department=women', img: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Men', href: '/marketplace?department=men', img: 'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Kids', href: '/marketplace?department=kids', img: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Shoes', href: '/marketplace?category=FOOTWEAR', img: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Handbags', href: '/marketplace?category=ACCESSORIES', img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Luxury', href: '/marketplace?sort=price_desc&q=luxury', img: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=400&q=80' },
 ];
 
 export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [listings, setListings] = useState<ClothingListing[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
-  const [likedListings, setLikedListings] = useState<Record<string, boolean>>({});
+
+  // Auto-advance hero slides every 7 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Fetch real listings from backend database
   useEffect(() => {
@@ -71,11 +94,15 @@ export default function HomePage() {
       try {
         setIsLoadingListings(true);
         const res = await api.getListings(1, 12);
-        if (res.success && res.data?.data) {
+        if (res.success && res.data?.data && res.data.data.length > 0) {
           setListings(res.data.data);
+        } else {
+          // If database is empty, fallback to rich curated showcase
+          setListings(CURATED_SHOWCASE_LISTINGS);
         }
       } catch (err) {
-        console.error('Error fetching listings:', err);
+        console.error('Error fetching listings, using showcase items:', err);
+        setListings(CURATED_SHOWCASE_LISTINGS);
       } finally {
         setIsLoadingListings(false);
       }
@@ -83,116 +110,149 @@ export default function HomePage() {
     loadListings();
   }, []);
 
-  // Auto carousel slide timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const toggleLike = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    setLikedListings((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  const currentSlide = HERO_SLIDES[activeSlide];
 
   return (
     <div className="flex-1 flex flex-col bg-white">
-      {/* ── 1. Hero Fashion Carousel (Poshmark Style) ────────────────────── */}
-      <section className="relative w-full h-[420px] sm:h-[500px] bg-slate-900 overflow-hidden group">
-        {HERO_SLIDES.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-            }`}
-          >
-            {/* Slide Background Image */}
-            <div
-              className="absolute inset-0 bg-cover bg-center transform scale-105 transition-transform duration-10000"
-              style={{ backgroundImage: `url(${slide.image})` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/50 to-transparent" />
-            </div>
+      {/* ── 1. Hero Banner / Carousel ────────────────────────────────────────── */}
+      <section className="relative isolate min-h-[460px] sm:min-h-[520px] lg:min-h-[560px] overflow-hidden bg-slate-900 text-white">
+        {/* Carousel Background Image */}
+        <div className="absolute inset-0">
+          <img
+            src={currentSlide.image}
+            alt={currentSlide.title}
+            fetchPriority="high"
+            className="h-full w-full object-cover transition-opacity duration-700 ease-in-out"
+          />
+          {/* Subtle gradient overlay to match Poshmark aesthetic and maintain high contrast */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/15" />
+        </div>
 
-            {/* Slide Content Overlay */}
-            <div className="relative z-20 max-w-7xl mx-auto h-full px-6 sm:px-12 flex flex-col justify-center items-start text-white space-y-4">
-              <span className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-posh-900/80 backdrop-blur-md text-[11px] font-semibold tracking-wider uppercase border border-posh-500/30">
-                <Sparkles className="h-3 w-3 text-posh-300" />
-                <span>Sustainable Swap Marketplace</span>
-              </span>
+        {/* Hero Content Container */}
+        <div className="relative mx-auto flex min-h-[460px] sm:min-h-[520px] lg:min-h-[560px] max-w-7xl items-center px-6 sm:px-12 lg:px-16 py-16">
+          <div className="max-w-2xl space-y-6 text-left">
+            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white/90">
+              <Sparkles className="h-4 w-4 text-[#e04768]" />
+              {currentSlide.subtitle}
+            </span>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-extrabold tracking-tight max-w-2xl leading-tight">
-                {slide.title}
-              </h1>
+            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-white drop-shadow-sm">
+              {currentSlide.title}
+            </h1>
 
-              <p className="text-sm sm:text-base text-slate-200 max-w-lg font-normal leading-relaxed">
-                {slide.subtitle}
-              </p>
+            <p className="max-w-xl text-sm sm:text-base text-white/90 font-normal leading-relaxed">
+              {currentSlide.description}
+            </p>
 
-              <div className="pt-2">
-                <Link href={slide.ctaLink}>
-                  <Button
-                    size="lg"
-                    className="bg-white text-slate-900 hover:bg-slate-100 font-bold px-8 py-3 rounded-none shadow-lg text-sm tracking-wide transition-all transform hover:-translate-y-0.5"
-                  >
-                    {slide.ctaText}
-                  </Button>
-                </Link>
-              </div>
+            <div className="pt-2">
+              <Link href={currentSlide.ctaLink}>
+                <button
+                  type="button"
+                  className="rounded-md bg-white px-8 py-3.5 text-sm font-bold text-slate-950 hover:bg-slate-100 transition-colors shadow-lg active:scale-95"
+                >
+                  {currentSlide.ctaText}
+                </button>
+              </Link>
             </div>
           </div>
-        ))}
+        </div>
 
-        {/* Carousel Navigation Arrows */}
+        {/* Carousel Chevrons */}
         <button
-          onClick={() =>
-            setActiveSlide((prev) => (prev === 0 ? HERO_SLIDES.length - 1 : prev - 1))
-          }
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
+          type="button"
+          onClick={() => setActiveSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
           aria-label="Previous Slide"
+          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-xs transition-colors"
         >
           <ChevronLeft className="h-6 w-6" />
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
           aria-label="Next Slide"
+          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-xs transition-colors"
         >
           <ChevronRight className="h-6 w-6" />
         </button>
 
-        {/* Pagination Indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-2">
-          {HERO_SLIDES.map((_, idx) => (
+        {/* Slide Indicator Bar at bottom (Poshmark dash pill style) */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+          {HERO_SLIDES.map((slide, index) => (
             <button
-              key={idx}
-              onClick={() => setActiveSlide(idx)}
-              className={`h-1.5 transition-all duration-300 rounded-full ${
-                idx === activeSlide ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
+              key={slide.id}
+              type="button"
+              onClick={() => setActiveSlide(index)}
+              aria-label={`Slide ${index + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                index === activeSlide ? 'w-10 bg-white' : 'w-2.5 bg-white/50 hover:bg-white/80'
               }`}
-              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
       </section>
 
-      {/* ── 2. Quick Category Circular Badges ──────────────────────────────── */}
-      <section className="border-b border-slate-100 bg-slate-50/50 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 text-center">
-            {QUICK_CATEGORIES.map((cat) => (
+      {/* ── 2. Section: "Inspiration Starts Here" ──────────────────────────── */}
+      <section className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-8">
+        <div className="space-y-1.5">
+          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-900 tracking-tight">
+            Inspiration Starts Here
+          </h2>
+          <p className="text-sm sm:text-base text-slate-600 font-normal">
+            Explore curated trends and standout finds.
+          </p>
+        </div>
+
+        {/* Listings Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {listings.map((item) => (
+            <ListingCard key={item.id} listing={item} />
+          ))}
+        </div>
+
+        <div className="text-center pt-6">
+          <Link href="/marketplace">
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full px-8 py-3 font-semibold text-slate-800 border-slate-300 hover:border-[#841d37] hover:text-[#841d37]"
+            >
+              Discover More Curated Listings
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* ── 3. Department Circles / Quick Categories ────────────────────────── */}
+      <section className="bg-slate-50 border-y border-slate-200 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="text-center space-y-1">
+            <h3 className="text-2xl font-serif font-bold text-slate-900">
+              Shop by Department
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Find what fits your personal style across verified fashion closets
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 pt-2">
+            {DEPARTMENT_TILES.map((dept) => (
               <Link
-                key={cat.name}
-                href={cat.href}
-                className="group flex flex-col items-center space-y-2 p-2 rounded-2xl hover:bg-white hover:shadow-xs transition-all"
+                key={dept.name}
+                href={dept.href}
+                className="group flex flex-col items-center space-y-2 text-center"
               >
-                <div className="h-14 w-14 rounded-full bg-white border border-slate-200 group-hover:border-posh-800 flex items-center justify-center text-2xl shadow-xs transition-colors">
-                  {cat.icon}
+                <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#841d37] shadow-sm transition-all duration-300 group-hover:scale-105">
+                  <img
+                    src={dept.img}
+                    alt={dept.name}
+                    className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 group-hover:text-posh-900">
-                  {cat.name}
+                <span className="text-xs sm:text-sm font-semibold text-slate-800 group-hover:text-[#841d37] transition-colors">
+                  {dept.name}
                 </span>
               </Link>
             ))}
@@ -200,163 +260,98 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 3. Section: "Inspiration Starts Here" ──────────────────────────── */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-8">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-serif font-extrabold text-slate-900 tracking-tight">
-            Inspiration Starts Here
-          </h2>
-          <p className="text-sm text-slate-500 font-normal">
-            Explore curated trends and standout finds from fashion swap closets.
-          </p>
+      {/* ── 4. Trending Brands Marquee ───────────────────────────────────────── */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-serif font-bold text-slate-900">
+            Trending Brands on SwapWear
+          </h3>
+          <Link href="/marketplace" className="text-xs font-semibold text-[#841d37] hover:underline">
+            View All Brands
+          </Link>
         </div>
 
-        {/* Listings Grid */}
-        {isLoadingListings ? (
-          <div className="min-h-[30vh] flex flex-col items-center justify-center space-y-3 py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-posh-800" />
-            <p className="text-xs font-semibold text-slate-500">Loading marketplace listings...</p>
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-slate-50 rounded-3xl border border-dashed border-slate-200 space-y-3">
-            <Shirt className="h-12 w-12 text-slate-400 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-900">No Listings Found</h3>
-            <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Be the first to list a garment in our sustainable fashion marketplace!
-            </p>
-            <Link href="/listings/new">
-              <Button className="mt-2 bg-posh-900 hover:bg-posh-950 text-white rounded-full">
-                List an Item Now
-              </Button>
+        <div className="flex flex-wrap gap-2.5">
+          {POPULAR_BRANDS.map((brand) => (
+            <Link
+              key={brand}
+              href={`/marketplace?brand=${encodeURIComponent(brand)}`}
+              className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-700 hover:border-[#841d37] hover:text-[#841d37] hover:shadow-2xs transition-all"
+            >
+              {brand}
             </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {listings.map((item) => {
-              const isLiked = likedListings[item.id];
-              return (
-                <Link
-                  key={item.id}
-                  href={`/listings/${item.id}`}
-                  className="group flex flex-col bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all transform hover:-translate-y-1"
-                >
-                  {/* Item Image Container */}
-                  <div className="relative aspect-4/5 w-full bg-slate-100 overflow-hidden">
-                    {item.images && item.images.length > 0 ? (
-                      <img
-                        src={item.images[0].imageUrl}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 space-y-1">
-                        <Shirt className="h-10 w-10" />
-                        <span className="text-[10px]">No Photo</span>
-                      </div>
-                    )}
-
-                    {/* Category Badge Overlay */}
-                    <div className="absolute top-2 left-2">
-                      <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white uppercase tracking-wider">
-                        {item.category}
-                      </span>
-                    </div>
-
-                    {/* Like / Heart Button */}
-                    <button
-                      onClick={(e) => toggleLike(item.id, e)}
-                      className={`absolute top-2 right-2 h-8 w-8 rounded-full flex items-center justify-center backdrop-blur-md transition-colors ${
-                        isLiked
-                          ? 'bg-red-500 text-white'
-                          : 'bg-white/80 text-slate-600 hover:bg-white hover:text-red-500'
-                      }`}
-                      aria-label="Save item"
-                    >
-                      <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
-
-                  {/* Card Content (Poshmark Format) */}
-                  <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
-                    <div className="space-y-1">
-                      {/* Brand & Size Row */}
-                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wide">
-                        <span className="truncate max-w-[120px]">
-                          {item.brand || 'Unbranded'}
-                        </span>
-                        <span className="text-slate-400 font-mono">Size {item.size}</span>
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="text-sm font-semibold text-slate-900 group-hover:text-posh-900 line-clamp-1 leading-snug">
-                        {item.title}
-                      </h3>
-                    </div>
-
-                    {/* Swap Value & Condition */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center space-x-1">
-                        <span className="text-xs font-bold text-posh-900">
-                          {item.estimatedSwapValue
-                            ? `$${item.estimatedSwapValue.toFixed(2)}`
-                            : 'Free Swap'}
-                        </span>
-                      </div>
-
-                      <span className="text-[10px] font-medium text-slate-500 px-1.5 py-0.5 rounded bg-slate-100">
-                        {item.condition.replace('_', ' ')}
-                      </span>
-                    </div>
-
-                    {/* Owner Info Bar */}
-                    <div className="pt-1.5 flex items-center space-x-1.5 text-[11px] text-slate-500">
-                      <div className="h-4 w-4 rounded-full bg-posh-900 text-white flex items-center justify-center font-bold text-[9px]">
-                        {item.owner.name[0]}
-                      </div>
-                      <span className="truncate max-w-[90px] font-medium text-slate-700">
-                        @{item.owner.name.toLowerCase().replace(/\s+/g, '')}
-                      </span>
-                      {item.owner.city && (
-                        <span className="truncate text-slate-400">
-                          • {item.owner.city}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+          ))}
+        </div>
       </section>
 
-      {/* ── 4. Poshmark Style Banner: "Join the Circular Fashion Community" ──── */}
-      <section className="bg-sand-100/70 border-y border-slate-200/80 py-16 px-4 sm:px-6 lg:px-8">
+      {/* ── 5. Sell Now Banner (Poshmark Seller CTA) ─────────────────────────── */}
+      <section className="bg-[#841d37] text-white py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center space-y-6">
-          <Badge variant="outline" className="bg-white text-posh-900 border-posh-200">
-            Sustainable Wardrobe Exchange
+          <Badge variant="outline" className="bg-white/10 text-white border-white/20 text-xs tracking-wider">
+            SWAPWEAR SELLER COMMUNITY
           </Badge>
 
-          <h2 className="text-3xl sm:text-4xl font-serif font-extrabold text-slate-900">
-            Clear your closet. Swap what you don’t wear.
+          <h2 className="text-3xl sm:text-5xl font-serif font-extrabold text-white">
+            Turn Your Closet into Cash & Style
           </h2>
 
-          <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-            Join thousands of fashion lovers trading high-quality pre-loved clothes, boots, dresses, and vintage finds with zero landfill impact.
+          <p className="max-w-2xl mx-auto text-sm sm:text-base text-white/90 leading-relaxed font-normal">
+            List in under 60 seconds. Snap a photo, set your price or swap preference, and join millions of fashion lovers circulating good clothing.
           </p>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/listings/new">
-              <Button size="lg" className="bg-posh-900 hover:bg-posh-950 text-white font-bold px-8 rounded-full">
-                List an Item Now
+              <Button size="lg" className="bg-white hover:bg-slate-100 text-[#841d37] font-bold px-8 py-3.5 rounded-md shadow-lg">
+                Sell an Item Now
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/register">
-              <Button variant="outline" size="lg" className="rounded-full px-8 border-slate-300">
-                Join SwapWear Free
+              <Button variant="outline" size="lg" className="text-white border-white/40 hover:bg-white/10 px-8 py-3.5 rounded-md">
+                Create Free Account
               </Button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. Trust & Safety Guarantee Bar ──────────────────────────────────── */}
+      <section className="border-t border-slate-200 bg-white py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-center sm:text-left">
+          <div className="flex items-start space-x-3.5">
+            <div className="h-10 w-10 rounded-full bg-[#fdf2f4] flex items-center justify-center text-[#841d37] flex-shrink-0">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">Posh Protect Guarantee</h4>
+              <p className="text-xs text-slate-500 mt-1">
+                Full buyer and swapper protection on all eligible transactions.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3.5">
+            <div className="h-10 w-10 rounded-full bg-[#fdf2f4] flex items-center justify-center text-[#841d37] flex-shrink-0">
+              <Package className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">Simple Shipping & Tracking</h4>
+              <p className="text-xs text-slate-500 mt-1">
+                Pre-paid labels and tracked delivery straight to your door.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3.5">
+            <div className="h-10 w-10 rounded-full bg-[#fdf2f4] flex items-center justify-center text-[#841d37] flex-shrink-0">
+              <RefreshCw className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">Circular Sustainable Fashion</h4>
+              <p className="text-xs text-slate-500 mt-1">
+                Keep wearable clothes out of landfills and in active closets.
+              </p>
+            </div>
           </div>
         </div>
       </section>

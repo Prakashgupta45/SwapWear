@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
-import { ListingService } from '../services/listing.service';
+import { ListingService, ListingFilterParams } from '../services/listing.service';
+import { Category, Condition, ListingStatus } from '@prisma/client';
 
 export class ListingController {
   /**
@@ -22,13 +23,30 @@ export class ListingController {
 
   /**
    * GET /api/listings
-   * Get paginated listings (public — shows AVAILABLE only)
+   * Get paginated and filtered listings
    */
   static async getListings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20));
-      const result = await ListingService.getListings(page, pageSize);
+      const filterParams: ListingFilterParams = {
+        search: (req.query.search || req.query.q) as string | undefined,
+        category: req.query.category as Category | undefined,
+        brand: req.query.brand as string | undefined,
+        size: req.query.size as string | undefined,
+        condition: req.query.condition as Condition | undefined,
+        minValue: req.query.minValue ? parseFloat(req.query.minValue as string) : undefined,
+        maxValue: req.query.maxValue ? parseFloat(req.query.maxValue as string) : undefined,
+        location: req.query.location as string | undefined,
+        status: req.query.status as ListingStatus | 'ALL' | undefined,
+        sort: req.query.sort as 'newest' | 'price_asc' | 'price_desc' | undefined,
+        page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+        pageSize: req.query.pageSize
+          ? parseInt(req.query.pageSize as string, 10)
+          : req.query.limit
+          ? parseInt(req.query.limit as string, 10)
+          : 12,
+      };
+
+      const result = await ListingService.getListings(filterParams);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);

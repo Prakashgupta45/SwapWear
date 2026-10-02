@@ -3,6 +3,7 @@ import { ProfileResponse, UserProfile } from '../types/profile';
 import {
   ClothingListing,
   ListingDetailResponse,
+  ListingQueryParams,
   MyListingsResponse,
   PaginatedListingsResponse,
 } from '../types/listing';
@@ -87,8 +88,17 @@ class ApiClient {
 
   // ── Listing APIs (Phase 2) ────────────────────────────────────────────────
 
-  async getListings(page = 1, pageSize = 20): Promise<PaginatedListingsResponse> {
-    return this.request<PaginatedListingsResponse>(`/listings?page=${page}&pageSize=${pageSize}`, {
+  async getListings(pageOrFilters: number | ListingQueryParams = 1, pageSize = 20): Promise<PaginatedListingsResponse> {
+    const params = new URLSearchParams();
+    const filters = typeof pageOrFilters === 'number'
+      ? { page: pageOrFilters, pageSize }
+      : pageOrFilters;
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') params.set(key, String(value));
+    });
+
+    return this.request<PaginatedListingsResponse>(`/listings?${params.toString()}`, {
       method: 'GET',
     });
   }
@@ -110,6 +120,7 @@ class ApiClient {
     description?: string;
     category: string;
     brand?: string;
+    color?: string;
     size: string;
     condition: string;
     estimatedSwapValue?: number;
@@ -128,6 +139,7 @@ class ApiClient {
       description?: string;
       category?: string;
       brand?: string;
+      color?: string;
       size?: string;
       condition?: string;
       estimatedSwapValue?: number;
