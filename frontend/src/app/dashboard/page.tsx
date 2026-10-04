@@ -1,174 +1,389 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { AuthGuard } from '../../components/AuthGuard';
+import { api } from '../../lib/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import {
   User as UserIcon,
-  ShieldCheck,
-  CheckCircle2,
-  Database,
-  Lock,
   LogOut,
   Calendar,
-  KeyRound
+  Shirt,
+  ArrowLeftRight,
+  PlusCircle,
+  ShoppingBag,
+  ArrowUpRight,
+  UserCheck,
+  Zap,
+  Inbox,
+  Send,
+  Shield,
+  Layers,
+  CheckCircle,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const [stats, setStats] = useState({
+    myListings: 0,
+    receivedSwaps: 0,
+    sentSwaps: 0,
+    loading: true,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchStats() {
+      try {
+        const [listingsRes, receivedRes, sentRes] = await Promise.allSettled([
+          api.getMyListings(),
+          api.getReceivedSwapRequests(),
+          api.getSentSwapRequests(),
+        ]);
+
+        if (!isMounted) return;
+
+        const myListings =
+          listingsRes.status === 'fulfilled' && listingsRes.value?.success && listingsRes.value.data?.listings
+            ? listingsRes.value.data.listings.length
+            : 0;
+
+        const receivedSwaps =
+          receivedRes.status === 'fulfilled' && receivedRes.value?.success && receivedRes.value.data?.swapRequests
+            ? receivedRes.value.data.swapRequests.length
+            : 0;
+
+        const sentSwaps =
+          sentRes.status === 'fulfilled' && sentRes.value?.success && sentRes.value.data?.swapRequests
+            ? sentRes.value.data.swapRequests.length
+            : 0;
+
+        setStats({
+          myListings,
+          receivedSwaps,
+          sentSwaps,
+          loading: false,
+        });
+      } catch {
+        if (isMounted) {
+          setStats((prev) => ({ ...prev, loading: false }));
+        }
+      }
+    }
+
+    fetchStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <AuthGuard>
       <div className="flex-1 py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-8">
-        {/* Header greeting banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm">
-          <div className="space-y-1.5">
-            <div className="flex items-center space-x-3">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Welcome back, {user?.name}!
-              </h1>
-              {user && (
-                <Badge variant={user.role === 'ADMIN' ? 'admin' : 'default'} className="text-xs">
-                  {user.role}
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-slate-500">
-              Your SwapWear account is active. You have full access to Phase 1 verified features.
-            </p>
-          </div>
+        {/* Header Greeting Banner - Premium Burgundy & Rose Gradient */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#731c33] via-[#841d37] to-[#a32243] p-7 sm:p-9 shadow-lg shadow-posh-900/15 border border-posh-700/40 text-white">
+          {/* Subtle decorative glow circles */}
+          <div className="absolute -top-12 -right-12 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-52 h-52 bg-rose-400/15 rounded-full blur-xl pointer-events-none" />
 
-          <Button
-            variant="outline"
-            onClick={() => logout()}
-            className="self-start sm:self-center text-slate-700 hover:text-red-600 hover:border-red-200"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center justify-center h-11 w-11 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white font-bold text-lg shadow-inner overflow-hidden shrink-0">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    user?.name ? user.name.charAt(0).toUpperCase() : 'U'
+                  )}
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Welcome back, {user?.name}!
+                </h1>
+                {user && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-rose-100 border border-white/25 backdrop-blur-sm">
+                    {user.role}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm sm:text-base text-rose-100/90 max-w-2xl font-light">
+                Your SwapWear account is active. Manage your wardrobe, explore community styles, and exchange clothing with ease.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
+              <Link href="/profile">
+                <Button
+                  variant="outline"
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm font-medium shadow-sm transition-all"
+                >
+                  <UserCheck className="h-4 w-4 mr-2 text-rose-200" />
+                  Edit Profile
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                onClick={() => logout()}
+                className="bg-black/20 hover:bg-red-600/80 text-rose-100 hover:text-white border-white/20 backdrop-blur-sm font-medium transition-all"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats Overview Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* My Closet Stat */}
+          <Link href="/my-listings" className="group">
+            <div className="h-full p-6 rounded-2xl bg-gradient-to-br from-rose-50/70 via-white to-posh-50/40 border border-rose-200/80 shadow-sm transition-all duration-200 hover:shadow-md hover:border-posh-400 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-posh-700 uppercase tracking-wider">
+                  My Closet
+                </span>
+                <div className="h-10 w-10 rounded-xl bg-posh-100 text-posh-800 flex items-center justify-center group-hover:bg-posh-800 group-hover:text-white transition-all shadow-sm">
+                  <Shirt className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <p className="text-3xl font-extrabold text-slate-900">
+                  {stats.loading ? '—' : stats.myListings}
+                </p>
+                <span className="text-xs text-posh-700 font-semibold flex items-center group-hover:translate-x-0.5 transition-transform">
+                  View Items <ArrowUpRight className="h-3.5 w-3.5 ml-0.5" />
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">Active clothes listed for exchange</p>
+            </div>
+          </Link>
+
+          {/* Received Offers Stat */}
+          <Link href="/swap-requests" className="group">
+            <div className="h-full p-6 rounded-2xl bg-gradient-to-br from-amber-50/70 via-white to-orange-50/40 border border-amber-200/80 shadow-sm transition-all duration-200 hover:shadow-md hover:border-amber-400 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">
+                  Received Offers
+                </span>
+                <div className="h-10 w-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all shadow-sm">
+                  <Inbox className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <p className="text-3xl font-extrabold text-slate-900">
+                  {stats.loading ? '—' : stats.receivedSwaps}
+                </p>
+                <span className="text-xs text-amber-700 font-semibold flex items-center group-hover:translate-x-0.5 transition-transform">
+                  Review <ArrowUpRight className="h-3.5 w-3.5 ml-0.5" />
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">Pending incoming trade proposals</p>
+            </div>
+          </Link>
+
+          {/* Sent Requests Stat */}
+          <Link href="/swap-requests" className="group">
+            <div className="h-full p-6 rounded-2xl bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/40 border border-emerald-200/80 shadow-sm transition-all duration-200 hover:shadow-md hover:border-emerald-400 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                  Sent Requests
+                </span>
+                <div className="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center group-hover:bg-emerald-700 group-hover:text-white transition-all shadow-sm">
+                  <Send className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <p className="text-3xl font-extrabold text-slate-900">
+                  {stats.loading ? '—' : stats.sentSwaps}
+                </p>
+                <span className="text-xs text-emerald-700 font-semibold flex items-center group-hover:translate-x-0.5 transition-transform">
+                  Track <ArrowUpRight className="h-3.5 w-3.5 ml-0.5" />
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">Propositions sent to other members</p>
+            </div>
+          </Link>
         </div>
 
         {/* Dashboard Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* User Profile Card */}
-          <Card className="shadow-sm border-slate-200 md:col-span-1">
-            <CardHeader className="pb-4">
-              <div className="flex items-center space-x-2.5">
-                <div className="h-9 w-9 rounded-xl bg-forest-100 flex items-center justify-center text-forest-800">
-                  <UserIcon className="h-5 w-5" />
+          <Card className="shadow-sm border-slate-200/90 rounded-2xl md:col-span-1 flex flex-col justify-between overflow-hidden bg-white">
+            <div>
+              <CardHeader className="pb-4 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100">
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 rounded-xl bg-posh-100 flex items-center justify-center text-posh-800 shadow-sm">
+                    <UserIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-slate-900">Account Profile</CardTitle>
+                    <CardDescription className="text-xs text-slate-500">Authenticated identity details</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Account Profile</CardTitle>
-                  <CardDescription>Safe authenticated identity</CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-3.5 p-6 text-sm">
+                <div className="p-3.5 bg-slate-50/80 rounded-xl space-y-1 border border-slate-100">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">User ID</span>
+                  <p className="font-mono text-xs text-slate-700 break-all">{user?.id}</p>
                 </div>
-              </div>
-            </CardHeader>
 
-            <CardContent className="space-y-4 text-sm">
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1 border border-slate-100">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">User ID</span>
-                <p className="font-mono text-xs text-slate-700 break-all">{user?.id}</p>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1 border border-slate-100">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email Address</span>
-                <p className="font-medium text-slate-800">{user?.email}</p>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1 border border-slate-100">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Role</span>
-                <div className="pt-0.5">
-                  <Badge variant={user?.role === 'ADMIN' ? 'admin' : 'default'}>
-                    {user?.role}
-                  </Badge>
+                <div className="p-3.5 bg-slate-50/80 rounded-xl space-y-1 border border-slate-100">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email Address</span>
+                  <p className="font-medium text-slate-800">{user?.email}</p>
                 </div>
-              </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1 border border-slate-100 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Member Since</span>
-                  <p className="text-xs text-slate-700">
-                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Today'}
-                  </p>
+                <div className="p-3.5 bg-slate-50/80 rounded-xl space-y-1 border border-slate-100">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Role</span>
+                  <div className="pt-0.5">
+                    <Badge variant={user?.role === 'ADMIN' ? 'admin' : 'default'} className="bg-posh-50 text-posh-700 border-posh-200">
+                      {user?.role}
+                    </Badge>
+                  </div>
                 </div>
-                <Calendar className="h-4 w-4 text-slate-400" />
-              </div>
-            </CardContent>
+
+                <div className="p-3.5 bg-slate-50/80 rounded-xl space-y-1 border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Member Since</span>
+                    <p className="text-xs font-medium text-slate-700">
+                      {user?.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : 'Today'}
+                    </p>
+                  </div>
+                  <Calendar className="h-4 w-4 text-slate-400" />
+                </div>
+              </CardContent>
+            </div>
+
+            <div className="p-6 pt-0">
+              <Link href="/profile" className="w-full block">
+                <Button
+                  variant="outline"
+                  className="w-full border-posh-200 text-posh-800 hover:bg-posh-50 hover:border-posh-400 font-medium transition-all"
+                >
+                  <UserCheck className="h-4 w-4 mr-2 text-posh-700" />
+                  Edit Profile & Bio
+                </Button>
+              </Link>
+            </div>
           </Card>
 
-          {/* Phase 1 Verification Status */}
-          <Card className="shadow-sm border-slate-200 md:col-span-2">
-            <CardHeader className="pb-4">
-              <div className="flex items-center space-x-2.5">
-                <div className="h-9 w-9 rounded-xl bg-forest-100 flex items-center justify-center text-forest-800">
-                  <ShieldCheck className="h-5 w-5" />
+          {/* Quick Actions & Hub */}
+          <Card className="shadow-sm border-slate-200/90 rounded-2xl md:col-span-2 overflow-hidden bg-white">
+            <CardHeader className="pb-4 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 rounded-xl bg-posh-100 flex items-center justify-center text-posh-800 shadow-sm">
+                  <Zap className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Phase 1 Architecture Status</CardTitle>
-                  <CardDescription>Security, database, and authentication criteria</CardDescription>
+                  <CardTitle className="text-lg font-bold text-slate-900">Quick Actions & Hub</CardTitle>
+                  <CardDescription className="text-xs text-slate-500">
+                    Manage your wardrobe, exchanges, and discover new styles
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
-                  <div className="flex items-center space-x-2 text-forest-700 font-semibold text-sm">
-                    <Database className="h-4 w-4" />
-                    <span>PostgreSQL & Prisma</span>
+                {/* Hero Action: List a Clothing Item */}
+                <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-[#841d37] to-[#5b1325] text-white shadow-md shadow-posh-900/10 space-y-3.5 flex flex-col justify-between transition-all hover:shadow-lg hover:scale-[1.01]">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center space-x-2 text-rose-100 font-bold text-sm">
+                      <div className="h-7 w-7 rounded-lg bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
+                        <PlusCircle className="h-4 w-4" />
+                      </div>
+                      <span>List a Clothing Item</span>
+                    </div>
+                    <p className="text-xs text-rose-100/85 font-light leading-relaxed">
+                      Upload fresh items with photos, condition, brand, and swap value to exchange with others.
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Real PostgreSQL persistence with Prisma ORM migrations, unique indexed emails, and Role enum.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-medium text-emerald-600 space-x-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Connected & Migrated</span>
-                  </div>
+                  <Link href="/listings/new">
+                    <Button size="sm" className="w-full bg-white text-posh-900 hover:bg-rose-50 font-semibold shadow-sm">
+                      Create New Listing
+                    </Button>
+                  </Link>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
-                  <div className="flex items-center space-x-2 text-forest-700 font-semibold text-sm">
-                    <Lock className="h-4 w-4" />
-                    <span>HTTP-only Cookie Session</span>
+                {/* My Closet Card */}
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-forest-300 hover:shadow-sm transition-all space-y-3.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center space-x-2 text-forest-800 font-bold text-sm">
+                      <div className="h-7 w-7 rounded-lg bg-forest-100 flex items-center justify-center text-forest-800">
+                        <Shirt className="h-4 w-4" />
+                      </div>
+                      <span>My Closet</span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-light leading-relaxed">
+                      View all your listed clothes, edit details, track availability, or remove items anytime.
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    JWT token stored in secure HTTP-only cookies with SameSite lax protection against XSS and CSRF.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-medium text-emerald-600 space-x-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Protected Session Active</span>
-                  </div>
+                  <Link href="/my-listings">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-forest-200 text-forest-800 hover:bg-forest-50 hover:border-forest-400 font-medium"
+                    >
+                      Manage My Closet
+                    </Button>
+                  </Link>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
-                  <div className="flex items-center space-x-2 text-forest-700 font-semibold text-sm">
-                    <KeyRound className="h-4 w-4" />
-                    <span>Bcrypt Password Security</span>
+                {/* Swap Requests Card */}
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-amber-300 hover:shadow-sm transition-all space-y-3.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center space-x-2 text-amber-800 font-bold text-sm">
+                      <div className="h-7 w-7 rounded-lg bg-amber-100 flex items-center justify-center text-amber-800">
+                        <ArrowLeftRight className="h-4 w-4" />
+                      </div>
+                      <span>Swap Requests</span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-light leading-relaxed">
+                      Review offers received from community members, accept or decline, and track sent requests.
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Passwords hashed with 12 salt rounds. PasswordHash is strictly excluded from all API responses.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-medium text-emerald-600 space-x-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Zero Plaintext Exposure</span>
-                  </div>
+                  <Link href="/swap-requests">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-amber-200 text-amber-800 hover:bg-amber-50 hover:border-amber-400 font-medium"
+                    >
+                      Review Swap Requests
+                    </Button>
+                  </Link>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
-                  <div className="flex items-center space-x-2 text-forest-700 font-semibold text-sm">
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>Role-Based Authorization</span>
+                {/* Explore Marketplace Card */}
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all space-y-3.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center space-x-2 text-indigo-800 font-bold text-sm">
+                      <div className="h-7 w-7 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-800">
+                        <ShoppingBag className="h-4 w-4" />
+                      </div>
+                      <span>Explore Marketplace</span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-light leading-relaxed">
+                      Browse clothing by department, size, and brand to find unique pre-loved fashion gems.
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Express middleware enforces USER and ADMIN permissions on protected resource endpoints.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-medium text-emerald-600 space-x-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>RBAC Enforced</span>
-                  </div>
+                  <Link href="/marketplace">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-indigo-200 text-indigo-800 hover:bg-indigo-50 hover:border-indigo-400 font-medium"
+                    >
+                      Browse Marketplace
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </CardContent>

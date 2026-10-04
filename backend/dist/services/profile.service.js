@@ -12,6 +12,7 @@ const SAFE_USER_SELECT = {
     city: true,
     state: true,
     pincode: true,
+    avatarUrl: true,
     createdAt: true,
     updatedAt: true,
 };
@@ -41,6 +42,7 @@ class ProfileService {
                 ...(input.city !== undefined && { city: input.city }),
                 ...(input.state !== undefined && { state: input.state }),
                 ...(input.pincode !== undefined && { pincode: input.pincode }),
+                ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl }),
             },
             select: SAFE_USER_SELECT,
         });

@@ -9,19 +9,41 @@ import {
 } from '../types/listing';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const TOKEN_KEY = 'swapwear_token';
+
+// Token helpers — store JWT from response body so Bearer auth always works
+export const tokenStorage = {
+  get: (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(TOKEN_KEY);
+  },
+  set: (token: string) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(TOKEN_KEY, token);
+  },
+  clear: () => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(TOKEN_KEY);
+  },
+};
 
 class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers = {
+
+    // Attach Bearer token if available (supports both cookie + header auth)
+    const token = tokenStorage.get();
+
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'include', // Ensures HTTP-only cookies are sent and stored
+      credentials: 'include', // Also send cookies as fallback
     });
 
     const data = await response.json().catch(() => ({}));
@@ -79,6 +101,7 @@ class ApiClient {
     city?: string | null;
     state?: string | null;
     pincode?: string | null;
+    avatarUrl?: string | null;
   }): Promise<ProfileResponse> {
     return this.request<ProfileResponse>('/profile', {
       method: 'PATCH',
@@ -158,6 +181,56 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // ── Swap Request APIs (Phase 4) ──────────────────────────────────────────
+
+  async createSwapRequest(data: {
+    requestedListingId: string;
+    offeredListingId: string;
+    message?: string;
+  }): Promise<{ success: boolean; message?: string; data: { swapRequest: any } }> {
+    return this.request('/swap-requests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getSentSwapRequests(): Promise<{ success: boolean; data: { swapRequests: any[] } }> {
+    return this.request('/swap-requests/sent', {
+      method: 'GET',
+    });
+  }
+
+  async getReceivedSwapRequests(): Promise<{ success: boolean; data: { swapRequests: any[] } }> {
+    return this.request('/swap-requests/received', {
+      method: 'GET',
+    });
+  }
+
+  async getSwapRequestById(id: string): Promise<{ success: boolean; data: { swapRequest: any } }> {
+    return this.request(`/swap-requests/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async acceptSwapRequest(id: string): Promise<{ success: boolean; message?: string; data: { swapRequest: any } }> {
+    return this.request(`/swap-requests/${id}/accept`, {
+      method: 'PATCH',
+    });
+  }
+
+  async rejectSwapRequest(id: string): Promise<{ success: boolean; message?: string; data: { swapRequest: any } }> {
+    return this.request(`/swap-requests/${id}/reject`, {
+      method: 'PATCH',
+    });
+  }
+
+  async cancelSwapRequest(id: string): Promise<{ success: boolean; message?: string; data: { swapRequest: any } }> {
+    return this.request(`/swap-requests/${id}/cancel`, {
+      method: 'PATCH',
+    });
+  }
 }
 
 export const api = new ApiClient();
+

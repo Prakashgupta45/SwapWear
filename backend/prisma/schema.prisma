@@ -38,6 +38,14 @@ enum ListingStatus {
   SWAPPED
 }
 
+enum SwapRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -51,10 +59,13 @@ model User {
   city         String?
   state        String?
   pincode      String?
+  avatarUrl    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  listings     ClothingListing[]
+  listings             ClothingListing[]
+  sentSwapRequests     SwapRequest[]     @relation("SentSwapRequests")
+  receivedSwapRequests SwapRequest[]     @relation("ReceivedSwapRequests")
 
   @@index([email])
   @@index([role])
@@ -76,8 +87,10 @@ model ClothingListing {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
-  owner  User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  images ClothingImage[]
+  owner            User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  images           ClothingImage[]
+  offeredInSwaps   SwapRequest[]   @relation("OfferedInSwaps")
+  requestedInSwaps SwapRequest[]   @relation("RequestedInSwaps")
 
   @@index([ownerId])
   @@index([status])
@@ -96,3 +109,28 @@ model ClothingImage {
   @@index([listingId])
   @@map("clothing_images")
 }
+
+model SwapRequest {
+  id                 String            @id @default(uuid())
+  requesterId        String
+  recipientId        String
+  offeredListingId   String
+  requestedListingId String
+  message            String?
+  status             SwapRequestStatus @default(PENDING)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  requester        User            @relation("SentSwapRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient        User            @relation("ReceivedSwapRequests", fields: [recipientId], references: [id], onDelete: Cascade)
+  offeredListing   ClothingListing @relation("OfferedInSwaps", fields: [offeredListingId], references: [id], onDelete: Cascade)
+  requestedListing ClothingListing @relation("RequestedInSwaps", fields: [requestedListingId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId])
+  @@index([recipientId])
+  @@index([offeredListingId])
+  @@index([requestedListingId])
+  @@index([status])
+  @@map("swap_requests")
+}
+

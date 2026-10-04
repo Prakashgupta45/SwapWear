@@ -9,6 +9,7 @@ export interface User {
   city?: string | null;
   state?: string | null;
   pincode?: string | null;
+  avatarUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }

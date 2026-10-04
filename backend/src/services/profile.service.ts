@@ -11,6 +11,7 @@ export interface UserProfile {
   city: string | null;
   state: string | null;
   pincode: string | null;
+  avatarUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +25,7 @@ const SAFE_USER_SELECT = {
   city: true,
   state: true,
   pincode: true,
+  avatarUrl: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -57,6 +59,7 @@ export class ProfileService {
         ...(input.city !== undefined && { city: input.city }),
         ...(input.state !== undefined && { state: input.state }),
         ...(input.pincode !== undefined && { pincode: input.pincode }),
+        ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl }),
       },
       select: SAFE_USER_SELECT,
     });

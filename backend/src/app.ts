@@ -5,6 +5,7 @@ import { env } from './config/env';
 import authRoutes from './routes/auth.routes';
 import profileRoutes from './routes/profile.routes';
 import listingRoutes from './routes/listing.routes';
+import swapRequestRoutes from './routes/swapRequest.routes';
 import { errorHandler } from './middleware/error.middleware';
 import { authenticate } from './middleware/auth.middleware';
 import { authorizeRoles } from './middleware/authorize.middleware';
@@ -30,10 +31,11 @@ export const createApp = (): Application => {
     res.status(200).json({ status: 'ok', service: 'swapwear-backend', timestamp: new Date() });
   });
 
-  // Auth & Phase 2 routes
+  // Auth, Profile, Listings, and Swap Requests routes
   app.use('/api/auth', authRoutes);
   app.use('/api/profile', profileRoutes);
   app.use('/api/listings', listingRoutes);
+  app.use('/api/swap-requests', swapRequestRoutes);
 
   // Protected Admin route for testing role-based authorization
   app.get(

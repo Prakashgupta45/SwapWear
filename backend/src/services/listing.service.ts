@@ -139,20 +139,56 @@ export class ListingService {
     // Keep public browsing available-only by default; ALL opts into every status.
     if (params.status !== 'ALL') where.status = params.status || 'AVAILABLE';
 
-    // Search query across title, description, and brand
+    // Smart Search query across title, description, brand, color, and category
     if (params.search && params.search.trim()) {
-      const q = params.search.trim();
-      where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        { brand: { contains: q, mode: 'insensitive' } },
-      ];
+      const rawQ = params.search.trim();
+      const qLower = rawQ.toLowerCase();
+
+      // Collect search terms including department & fashion synonyms
+      const searchTerms = [rawQ];
+
+      if (/^(kid|kids|child|children|boy|boys|girl|girls|toddler|baby|youth)$/i.test(qLower)) {
+        ['kid', 'kids', "kid's", 'boy', 'boys', 'girl', 'girls', 'child', 'children', 'toddler', 'baby', 'youth', 'kidswear'].forEach(
+          (t) => !searchTerms.includes(t) && searchTerms.push(t)
+        );
+      } else if (/^(men|mens|man|male|menswear)$/i.test(qLower)) {
+        ['men', "men's", 'mens', 'male', 'menswear'].forEach(
+          (t) => !searchTerms.includes(t) && searchTerms.push(t)
+        );
+        where.NOT = {
+          title: { contains: 'women', mode: 'insensitive' },
+        };
+      } else if (/^(women|womens|woman|female|ladies|womenswear)$/i.test(qLower)) {
+        ['women', "women's", 'womens', 'ladies', 'womenswear'].forEach(
+          (t) => !searchTerms.includes(t) && searchTerms.push(t)
+        );
+      }
+
+      // Also split multiple words (e.g. "kids jacket" -> "kids", "jacket")
+      const words = qLower.split(/[\s,-]+/).filter((w) => w.length > 1);
+      words.forEach((w) => {
+        if (!searchTerms.includes(w)) searchTerms.push(w);
+      });
+
+      const orConditions: Prisma.ClothingListingWhereInput[] = [];
+
+      for (const term of searchTerms) {
+        orConditions.push(
+          { title: { contains: term, mode: 'insensitive' } },
+          { description: { contains: term, mode: 'insensitive' } },
+          { brand: { contains: term, mode: 'insensitive' } },
+          { color: { contains: term, mode: 'insensitive' } }
+        );
+      }
+
       const matchingCategories = (Object.entries(CATEGORY_SEARCH_TERMS) as [Category, string[]][])
-        .filter(([, terms]) => terms.some((term) => q.toLowerCase().includes(term)))
+        .filter(([, terms]) => terms.some((term) => qLower.includes(term)))
         .map(([category]) => category);
       if (matchingCategories.length > 0) {
-        where.OR.push({ category: { in: matchingCategories } });
+        orConditions.push({ category: { in: matchingCategories } });
       }
+
+      where.OR = orConditions;
     }
 
     // Category filter

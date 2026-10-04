@@ -1,12 +1,17 @@
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
 // @ts-ignore
 import EmbeddedPostgres from 'embedded-postgres';
 // @ts-ignore
 import { Client } from 'pg';
 
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 const dbPath = path.resolve(__dirname, '../.db-data');
-const port = 5432;
+const dbUrl = process.env.DATABASE_URL || '';
+const portMatch = dbUrl.match(/:(\d+)\//);
+const port = portMatch ? parseInt(portMatch[1], 10) : 5433;
 
 async function start() {
   console.log(`Starting Embedded PostgreSQL on port ${port}...`);

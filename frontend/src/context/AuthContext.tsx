@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, AuthContextType } from '../types/auth';
-import { api } from '../lib/api';
+import { api, tokenStorage } from '../lib/api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -69,16 +69,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setDemoUser(null);
         return;
       }
+      // Backend responded but no valid user — clear any stale demo session
       setUser(null);
+      setDemoUser(null);
+      tokenStorage.clear();
       setBackendAvailable(true);
-    } catch {
-      // Backend not available — try local demo session
-      setBackendAvailable(false);
-      const storedDemo = getDemoUser();
-      if (storedDemo) {
-        setUser(storedDemo);
+    } catch (err: any) {
+      // Only fall back to demo mode on real network errors (backend is down)
+      // HTTP errors like 401 mean backend IS up — user is just not logged in
+      const isNetworkError =
+        err.name === 'TypeError' ||
+        err.message?.includes('fetch') ||
+        err.message?.includes('network') ||
+        err.message?.includes('Failed to fetch') ||
+        err.message?.includes('NetworkError');
+
+      if (isNetworkError) {
+        // Backend not available — try local demo session
+        setBackendAvailable(false);
+        const storedDemo = getDemoUser();
+        if (storedDemo) {
+          setUser(storedDemo);
+        } else {
+          setUser(null);
+        }
       } else {
+        // Backend is up but returned an error (e.g. 401) — clear stale sessions
+        setBackendAvailable(true);
         setUser(null);
+        setDemoUser(null);
+        tokenStorage.clear();
       }
     } finally {
       setIsLoading(false);
@@ -96,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.success && res.data?.user) {
         setUser(res.data.user);
         setBackendAvailable(true);
+        // Save JWT for Bearer auth on subsequent requests
+        if (res.data.token) tokenStorage.set(res.data.token);
         return { success: true };
       }
       return { success: false, error: res.message || 'Login failed' };
@@ -108,8 +130,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { password: _p, ...safeUser } = demoMatch;
         const userObj: User = {
           ...safeUser,
-          createdAt: new Date(safeUser.createdAt),
-          updatedAt: new Date(safeUser.updatedAt),
+          createdAt: safeUser.createdAt,
+          updatedAt: safeUser.updatedAt,
         };
         setUser(userObj);
         setDemoUser(userObj);
@@ -137,6 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.success && res.data?.user) {
         setUser(res.data.user);
         setBackendAvailable(true);
+        // Save JWT for Bearer auth on subsequent requests
+        if (res.data.token) tokenStorage.set(res.data.token);
         return { success: true };
       }
       return { success: false, error: res.message || 'Registration failed' };
@@ -156,8 +180,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name,
           email,
           role: 'USER',
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         setUser(newUser);
         setDemoUser(newUser);
@@ -181,6 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       setDemoUser(null);
+      tokenStorage.clear();
     }
   };
 

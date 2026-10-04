@@ -23,7 +23,7 @@ class ListingController {
     static async getListings(req, res, next) {
         try {
             const filterParams = {
-                search: (req.query.search || req.query.q),
+                search: (req.query.search || req.query.q || req.query.query || req.query.department),
                 category: req.query.category,
                 brand: req.query.brand,
                 size: req.query.size,

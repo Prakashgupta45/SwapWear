@@ -41,6 +41,7 @@ class AuthService {
                 name: true,
                 email: true,
                 role: true,
+                avatarUrl: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -82,6 +83,7 @@ class AuthService {
             name: user.name,
             email: user.email,
             role: user.role,
+            avatarUrl: user.avatarUrl,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };
@@ -98,6 +100,7 @@ class AuthService {
                 name: true,
                 email: true,
                 role: true,
+                avatarUrl: true,
                 createdAt: true,
                 updatedAt: true,
             },

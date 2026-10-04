@@ -11,6 +11,7 @@ const env_1 = require("./config/env");
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const profile_routes_1 = __importDefault(require("./routes/profile.routes"));
 const listing_routes_1 = __importDefault(require("./routes/listing.routes"));
+const swapRequest_routes_1 = __importDefault(require("./routes/swapRequest.routes"));
 const error_middleware_1 = require("./middleware/error.middleware");
 const auth_middleware_1 = require("./middleware/auth.middleware");
 const authorize_middleware_1 = require("./middleware/authorize.middleware");
@@ -29,10 +30,11 @@ const createApp = () => {
     app.get('/api/health', (_req, res) => {
         res.status(200).json({ status: 'ok', service: 'swapwear-backend', timestamp: new Date() });
     });
-    // Auth & Phase 2 routes
+    // Auth, Profile, Listings, and Swap Requests routes
     app.use('/api/auth', auth_routes_1.default);
     app.use('/api/profile', profile_routes_1.default);
     app.use('/api/listings', listing_routes_1.default);
+    app.use('/api/swap-requests', swapRequest_routes_1.default);
     // Protected Admin route for testing role-based authorization
     app.get('/api/admin/check', auth_middleware_1.authenticate, (0, authorize_middleware_1.authorizeRoles)('ADMIN'), (req, res) => {
         res.status(200).json({

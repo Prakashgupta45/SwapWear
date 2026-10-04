@@ -17,7 +17,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   RefreshCw,
   Loader2,
   ArrowUpDown,
@@ -44,6 +43,21 @@ const CONDITIONS: { label: string; value: Condition | 'ALL' }[] = [
 ];
 
 const SIZES = ['ALL', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36', '38'];
+
+const VISUAL_CATEGORIES = [
+  { label: 'Women', href: '/marketplace?department=women', img: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Men', href: '/marketplace?department=men', img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Kids', href: '/marketplace?department=kids', img: 'https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Home', href: '/marketplace?q=home', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Pets', href: '/marketplace?q=pets', img: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Electronics', href: '/marketplace?q=electronics', img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Luxury', href: '/marketplace?sort=price_desc&q=luxury', img: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Beauty', href: '/marketplace?category=ACCESSORIES&q=beauty', img: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Plus', href: '/marketplace?size=XL', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Petite', href: '/marketplace?size=XS', img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Trending', href: '/marketplace?sort=newest', img: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Brand', href: '/marketplace?sort=newest', img: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80' },
+];
 
 function MarketplaceContent() {
   const router = useRouter();
@@ -82,6 +96,38 @@ function MarketplaceContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
+  // Keep component state in sync whenever URL searchParams change (from Navbar search, back/forward buttons, or links)
+  useEffect(() => {
+    const qParam =
+      searchParams.get('q') ||
+      searchParams.get('query') ||
+      searchParams.get('search') ||
+      searchParams.get('department') ||
+      '';
+    const catParam = (searchParams.get('category') as Category) || 'ALL';
+    const brandParam = searchParams.get('brand') || '';
+    const sizeParam = searchParams.get('size') || 'ALL';
+    const condParam = (searchParams.get('condition') as Condition) || 'ALL';
+    const minParam = searchParams.get('minValue') || '';
+    const maxParam = searchParams.get('maxValue') || '';
+    const locParam = searchParams.get('location') || '';
+    const statusParam = (searchParams.get('status') as ListingStatus) || 'AVAILABLE';
+    const sortParam = (searchParams.get('sort') as 'newest' | 'price_asc' | 'price_desc') || 'newest';
+    const pageParam = Number(searchParams.get('page') || '1');
+
+    setSearch(qParam);
+    setCategory(catParam);
+    setBrand(brandParam);
+    setSize(sizeParam);
+    setCondition(condParam);
+    setMinValue(minParam);
+    setMaxValue(maxParam);
+    setLocation(locParam);
+    setStatus(statusParam);
+    setSort(sortParam);
+    setPage(Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1);
+  }, [searchParams]);
+
   // Sync state to URL & fetch listings from database
   useEffect(() => {
     let cancelled = false;
@@ -100,11 +146,14 @@ function MarketplaceContent() {
         if (location) queryParams.set('location', location);
         queryParams.set('status', status);
         if (sort !== 'newest') queryParams.set('sort', sort);
-        queryParams.set('page', page.toString());
+        if (page > 1) queryParams.set('page', page.toString());
         queryParams.set('limit', '12');
 
         const queryString = queryParams.toString();
-        router.replace(`/marketplace${queryString ? `?${queryString}` : ''}`, { scroll: false });
+        const targetUrl = `/marketplace${queryString ? `?${queryString}` : ''}`;
+        if (typeof window !== 'undefined' && window.location.pathname + window.location.search !== targetUrl) {
+          router.replace(targetUrl, { scroll: false });
+        }
 
         const response = await api.getListings({
           search: search || undefined,
@@ -218,11 +267,10 @@ function MarketplaceContent() {
   return (
     <div className="flex-1 flex flex-col bg-slate-50/50">
       {/* ── 1. Hero Section ───────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-slate-900 via-forest-950 to-slate-900 text-white py-14 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-[#1a050b] via-[#4a0d1d] to-[#1a050b] text-white py-14 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-4 max-w-2xl text-center md:text-left">
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-forest-900/80 border border-forest-500/30 text-forest-200 text-xs font-semibold tracking-wide">
-              <Sparkles className="h-3.5 w-3.5 text-forest-300" />
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#841d37]/80 border border-[#e5748e]/30 text-[#fbe5e9] text-xs font-semibold tracking-wide">
               <span>SwapWear Circular Marketplace</span>
             </div>
 
@@ -249,7 +297,7 @@ function MarketplaceContent() {
           </div>
 
           <div aria-hidden="true" className="hidden lg:block border-l border-white/25 pl-10 py-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-forest-200">Wear well</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#f0a7b6]">Wear well</p>
             <p className="mt-2 text-5xl font-serif font-bold leading-none">Swap often.</p>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-slate-300">
               A better find is already in someone&apos;s closet.
@@ -258,8 +306,69 @@ function MarketplaceContent() {
         </div>
       </section>
 
+      {/* ── Visual Department Showcase with Images ─────────────────────────── */}
+      <section className="bg-white border-b border-slate-200/80 py-5 px-4 sm:px-6 lg:px-8 shadow-2xs">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+              Browse by Department & Category
+            </h2>
+            <span className="text-[11px] text-slate-400 hidden sm:inline">Tap any category to filter</span>
+          </div>
+
+          <div className="flex items-center space-x-5 overflow-x-auto scrollbar-none pb-2 pt-1">
+            {VISUAL_CATEGORIES.map((cat) => {
+              const currentQ = search.toLowerCase();
+              const isActive =
+                (cat.label === 'Women' && currentQ === 'women') ||
+                (cat.label === 'Men' && currentQ === 'men') ||
+                (cat.label === 'Kids' && currentQ === 'kids') ||
+                (cat.label === 'Home' && currentQ === 'home') ||
+                (cat.label === 'Pets' && currentQ === 'pets') ||
+                (cat.label === 'Electronics' && currentQ === 'electronics') ||
+                (cat.label === 'Luxury' && currentQ === 'luxury') ||
+                (cat.label === 'Beauty' && currentQ === 'beauty') ||
+                (cat.label === 'Plus' && size === 'XL') ||
+                (cat.label === 'Petite' && size === 'XS') ||
+                (cat.label === 'Trending' && sort === 'newest' && !search);
+
+              return (
+                <Link
+                  key={cat.label}
+                  href={cat.href}
+                  className="flex flex-col items-center group flex-shrink-0 focus:outline-none"
+                >
+                  <div
+                    className={`h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 transition-all p-0.5 shadow-2xs ${
+                      isActive
+                        ? 'border-[#841d37] ring-2 ring-[#841d37]/30 scale-105'
+                        : 'border-slate-200 group-hover:border-[#841d37] group-hover:shadow-md'
+                    }`}
+                  >
+                    <img
+                      src={cat.img}
+                      alt={cat.label}
+                      className="h-full w-full rounded-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <span
+                    className={`mt-2 text-xs font-semibold tracking-tight transition-colors ${
+                      isActive
+                        ? 'text-[#841d37] font-bold'
+                        : 'text-slate-700 group-hover:text-[#841d37]'
+                    }`}
+                  >
+                    {cat.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── 2. Top Category Navigation Bar ────────────────────────────────── */}
-      <nav aria-label="Clothing categories" className="bg-white border-b border-slate-200 sticky top-40 lg:top-28 z-30 shadow-xs">
+      <nav aria-label="Clothing categories" className="bg-slate-50 border-b border-slate-200 sticky top-40 lg:top-28 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center space-x-3 overflow-x-auto scrollbar-none py-2.5">
           {CATEGORIES.map((cat) => (
             <button
@@ -272,7 +381,7 @@ function MarketplaceContent() {
               }}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 category === cat.value
-                  ? 'bg-forest-900 text-white shadow-xs'
+                  ? 'bg-[#841d37] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -298,7 +407,7 @@ function MarketplaceContent() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-forest-900 focus:ring-1 focus:ring-forest-900"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-[#841d37] focus:ring-1 focus:ring-[#841d37]"
             />
             {search && (
               <button
@@ -322,8 +431,8 @@ function MarketplaceContent() {
               aria-controls="marketplace-filters"
               className="lg:hidden text-xs font-semibold"
             >
-              <SlidersHorizontal className="h-4 w-4 mr-1.5 text-forest-900" />
-              Filters {hasActiveFilters && <span className="ml-1 text-forest-900 font-bold">•</span>}
+              <SlidersHorizontal className="h-4 w-4 mr-1.5 text-[#841d37]" />
+              Filters {hasActiveFilters && <span className="ml-1 text-[#841d37] font-bold">•</span>}
             </Button>
 
             <div className="flex items-center space-x-2 text-xs text-slate-600">
@@ -335,7 +444,7 @@ function MarketplaceContent() {
                   setSort(e.target.value as any);
                   setPage(1);
                 }}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-forest-900"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#841d37]"
               >
                 <option value="newest">Newest First</option>
                 <option value="price_asc">Swap Value: Low to High</option>
@@ -365,13 +474,13 @@ function MarketplaceContent() {
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-2 font-bold text-slate-900 text-sm">
-                <Filter className="h-4 w-4 text-forest-900" />
+                <Filter className="h-4 w-4 text-[#841d37]" />
                 <span>Filters</span>
               </div>
               {hasActiveFilters && (
                 <button
                   onClick={handleResetFilters}
-                  className="text-xs text-forest-900 font-semibold hover:underline flex items-center"
+                  className="text-xs text-[#841d37] font-semibold hover:underline flex items-center"
                 >
                   <RotateCcw className="h-3 w-3 mr-1" />
                   Reset
@@ -397,7 +506,7 @@ function MarketplaceContent() {
                   setCategory(e.target.value as Category | 'ALL');
                   setPage(1);
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest-900"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#841d37]"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>
@@ -437,7 +546,7 @@ function MarketplaceContent() {
                     }}
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                       size === sz
-                        ? 'bg-forest-900 text-white border-forest-900 font-bold'
+                        ? 'bg-[#841d37] text-white border-[#841d37] font-bold'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -457,7 +566,7 @@ function MarketplaceContent() {
                   setCondition(e.target.value as Condition | 'ALL');
                   setPage(1);
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest-900"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#841d37]"
               >
                 {CONDITIONS.map((cond) => (
                   <option key={cond.value} value={cond.value}>
@@ -476,7 +585,7 @@ function MarketplaceContent() {
                   setStatus(e.target.value as ListingStatus | 'ALL');
                   setPage(1);
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest-900"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#841d37]"
               >
                 <option value="ALL">Any availability</option>
                 <option value="AVAILABLE">Available</option>
@@ -547,7 +656,7 @@ function MarketplaceContent() {
 
             {isLoading ? (
               <div className="min-h-[40vh] flex flex-col items-center justify-center space-y-3 bg-white rounded-lg border border-slate-200">
-                <Loader2 className="h-8 w-8 animate-spin text-forest-900" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#841d37]" />
                 <p className="text-xs font-semibold text-slate-500">Searching database listings...</p>
               </div>
             ) : listings.length === 0 ? (
@@ -616,7 +725,7 @@ export default function MarketplacePage() {
     <Suspense
       fallback={
         <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin text-forest-900" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#841d37]" />
           <p className="text-xs font-semibold text-slate-500">Loading Marketplace...</p>
         </div>
       }

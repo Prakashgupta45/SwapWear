@@ -33,4 +33,9 @@ exports.updateProfileSchema = zod_1.z.object({
         .regex(/^\d{5,10}$/, 'Pincode must be 5-10 digits')
         .optional()
         .nullable(),
+    avatarUrl: zod_1.z
+        .string()
+        .trim()
+        .optional()
+        .nullable(),
 });

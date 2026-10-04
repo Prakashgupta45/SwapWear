@@ -13,6 +13,7 @@ export const profileFormSchema = z.object({
     })
     .optional()
     .or(z.literal('')),
+  avatarUrl: z.string().trim().optional().or(z.literal('')),
 });
 
 export type ProfileFormData = z.infer<typeof profileFormSchema>;
