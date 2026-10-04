@@ -20,6 +20,7 @@ import {
 
 import { CURATED_SHOWCASE_LISTINGS } from '../../../lib/curatedListings';
 import { SwapRequestModal } from '../../../components/SwapRequestModal';
+import SmartMatchSection from '../../../components/SmartMatchSection';
 
 export default function MarketplaceListingDetailPage() {
   const params = useParams();
@@ -30,6 +31,7 @@ export default function MarketplaceListingDetailPage() {
   const [listing, setListing] = useState<ClothingListing | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState<boolean>(false);
+  const [swapTargetListing, setSwapTargetListing] = useState<ClothingListing | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,6 +247,7 @@ export default function MarketplaceListingDetailPage() {
                       router.push(`/login?redirect=/marketplace/${listingId}`);
                       return;
                     }
+                    setSwapTargetListing(listing);
                     setIsSwapModalOpen(true);
                   }}
                   className="w-full bg-[#841d37] hover:bg-[#731c33] text-white font-bold py-3.5 rounded-lg shadow-md text-sm transition-all"
@@ -261,12 +264,30 @@ export default function MarketplaceListingDetailPage() {
         </div>
       </div>
 
+      {/* Phase 6: Dynamic Smart Matches & Recommendation Engine */}
+      {listing && listing.status === 'AVAILABLE' && (
+        <SmartMatchSection
+          targetListing={listing}
+          onInitiateSwap={(matchedListing) => {
+            if (!user) {
+              router.push(`/login?redirect=/marketplace/${listingId}`);
+              return;
+            }
+            setSwapTargetListing(matchedListing);
+            setIsSwapModalOpen(true);
+          }}
+        />
+      )}
+
       {/* Phase 4 Swap Request Modal */}
       {listing && (
         <SwapRequestModal
           isOpen={isSwapModalOpen}
-          onClose={() => setIsSwapModalOpen(false)}
-          requestedListing={listing}
+          onClose={() => {
+            setIsSwapModalOpen(false);
+            setSwapTargetListing(null);
+          }}
+          requestedListing={swapTargetListing || listing}
         />
       )}
     </div>

@@ -7,6 +7,7 @@ import profileRoutes from './routes/profile.routes';
 import listingRoutes from './routes/listing.routes';
 import swapRequestRoutes from './routes/swapRequest.routes';
 import { conversationRoutes, messageRoutes } from './routes/chat.routes';
+import matchRoutes from './routes/match.routes';
 import { errorHandler } from './middleware/error.middleware';
 import { authenticate } from './middleware/auth.middleware';
 import { authorizeRoles } from './middleware/authorize.middleware';
@@ -32,13 +33,14 @@ export const createApp = (): Application => {
     res.status(200).json({ status: 'ok', service: 'swapwear-backend', timestamp: new Date() });
   });
 
-  // Auth, Profile, Listings, Swap Requests, and Chat routes
+  // Auth, Profile, Listings, Swap Requests, Chat, and Match routes
   app.use('/api/auth', authRoutes);
   app.use('/api/profile', profileRoutes);
   app.use('/api/listings', listingRoutes);
   app.use('/api/swap-requests', swapRequestRoutes);
   app.use('/api/conversations', conversationRoutes);
   app.use('/api/messages', messageRoutes);
+  app.use('/api/matches', matchRoutes);
 
   // Protected Admin route for testing role-based authorization
   app.get(
