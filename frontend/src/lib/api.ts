@@ -279,6 +279,47 @@ class ApiClient {
       method: 'GET',
     });
   }
+
+  // Phase 6: Location-Based & Value-Based Swap Matching
+  async getListingMatches(
+    listingId: string,
+    params?: { page?: number; limit?: number; minScore?: number; cityOnly?: boolean }
+  ): Promise<import('../types/match').ListingMatchesResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.minScore) query.set('minScore', params.minScore.toString());
+    if (params?.cityOnly) query.set('cityOnly', 'true');
+
+    const qs = query.toString();
+    return this.request(`/listings/${listingId}/matches${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async getUserRecommendations(params?: {
+    limit?: number;
+    minScore?: number;
+  }): Promise<import('../types/match').RecommendationsResponse> {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.minScore) query.set('minScore', params.minScore.toString());
+
+    const qs = query.toString();
+    return this.request(`/matches/recommendations${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async compareListings(
+    sourceListingId: string,
+    targetListingId: string
+  ): Promise<import('../types/match').CompareResponse> {
+    return this.request('/matches/compare', {
+      method: 'POST',
+      body: JSON.stringify({ sourceListingId, targetListingId }),
+    });
+  }
 }
 
 export const api = new ApiClient();

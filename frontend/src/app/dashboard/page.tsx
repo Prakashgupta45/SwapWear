@@ -24,7 +24,10 @@ import {
   Shield,
   Layers,
   CheckCircle,
+  MapPin,
+  CheckCircle2,
 } from 'lucide-react';
+import { SwapMatchItem } from '../../types/match';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -34,15 +37,18 @@ export default function DashboardPage() {
     sentSwaps: 0,
     loading: true,
   });
+  const [recommendations, setRecommendations] = useState<SwapMatchItem[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
     async function fetchStats() {
       try {
-        const [listingsRes, receivedRes, sentRes] = await Promise.allSettled([
+        const [listingsRes, receivedRes, sentRes, recsRes] = await Promise.allSettled([
           api.getMyListings(),
           api.getReceivedSwapRequests(),
           api.getSentSwapRequests(),
+          api.getUserRecommendations({ limit: 4 }),
         ]);
 
         if (!isMounted) return;
@@ -62,6 +68,10 @@ export default function DashboardPage() {
             ? sentRes.value.data.swapRequests.length
             : 0;
 
+        if (recsRes.status === 'fulfilled' && recsRes.value?.success && recsRes.value.data?.recommendations) {
+          setRecommendations(recsRes.value.data.recommendations);
+        }
+
         setStats({
           myListings,
           receivedSwaps,
@@ -71,6 +81,10 @@ export default function DashboardPage() {
       } catch {
         if (isMounted) {
           setStats((prev) => ({ ...prev, loading: false }));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingRecommendations(false);
         }
       }
     }
@@ -206,6 +220,132 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-500 mt-1.5">Propositions sent to other members</p>
             </div>
           </Link>
+        </div>
+
+        {/* Phase 6: Dynamic Smart Matches & Personalized Recommendations */}
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-2xl bg-[#841d37]/10 text-[#841d37] flex items-center justify-center font-bold">
+                <Zap className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight">Smart Matches for Your Closet</h2>
+                <p className="text-xs text-slate-500">
+                  AI-evaluated high-compatibility trade suggestions tailored to your wardrobe and location
+                </p>
+              </div>
+            </div>
+
+            <Link href="/marketplace">
+              <Button variant="ghost" size="sm" className="text-xs font-semibold text-[#841d37] hover:bg-rose-50">
+                Explore All Items <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            </Link>
+          </div>
+
+          {isLoadingRecommendations ? (
+            <div className="py-10 flex flex-col items-center justify-center space-y-2">
+              <div className="h-6 w-6 border-2 border-[#841d37] border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs text-slate-500 font-medium">Finding compatible swap opportunities...</p>
+            </div>
+          ) : recommendations.length === 0 ? (
+            <div className="p-6 bg-slate-50/70 border border-dashed border-slate-200 rounded-2xl text-center space-y-2">
+              <p className="text-xs text-slate-600 font-medium">
+                No personalized match recommendations available yet.
+              </p>
+              <p className="text-[11px] text-slate-400">
+                List more clothing items in your closet with category, size, and swap value to activate smart recommendations.
+              </p>
+              <Link href="/listings/new" className="inline-block pt-1">
+                <Button size="sm" className="bg-[#841d37] hover:bg-[#731c33] text-white text-xs">
+                  List an Item
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {recommendations.map((rec) => {
+                const { listing, matchScore, matchLevel, locationMatch, matchedWithMyItem } = rec;
+                const primaryImage = listing.images?.[0]?.imageUrl;
+
+                return (
+                  <div
+                    key={listing.id}
+                    className="group rounded-2xl border border-slate-200/80 bg-white hover:border-[#841d37]/40 hover:shadow-md transition-all flex flex-col overflow-hidden"
+                  >
+                    <div className="relative aspect-4/3 bg-slate-100 overflow-hidden">
+                      {primaryImage ? (
+                        <img
+                          src={primaryImage}
+                          alt={listing.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <Shirt className="h-8 w-8" />
+                        </div>
+                      )}
+
+                      <div className="absolute top-2 right-2">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            matchLevel === 'EXCELLENT'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : matchLevel === 'GREAT'
+                              ? 'bg-teal-100 text-teal-800 border border-teal-300'
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}
+                        >
+                          {matchScore}% • {matchLevel}
+                        </span>
+                      </div>
+
+                      {locationMatch === 'SAME_CITY' && (
+                        <div className="absolute bottom-2 left-2 bg-emerald-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center">
+                          <MapPin className="h-2.5 w-2.5 mr-1 text-emerald-400" />
+                          Local
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-[#841d37] uppercase tracking-wider block">
+                          {listing.brand || 'Unbranded'} • {listing.size}
+                        </span>
+                        <Link
+                          href={`/marketplace/${listing.id}`}
+                          className="text-xs font-bold text-slate-900 line-clamp-1 hover:text-[#841d37] transition-colors"
+                        >
+                          {listing.title}
+                        </Link>
+                        <p className="text-[11px] font-semibold text-slate-600">
+                          {listing.estimatedSwapValue !== null ? `$${listing.estimatedSwapValue.toFixed(0)}` : 'Valued fair'}
+                        </p>
+                      </div>
+
+                      {matchedWithMyItem && (
+                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-1.5 text-[10px] text-slate-600 truncate">
+                          <span className="font-semibold text-slate-700">Pairs with:</span> {matchedWithMyItem.title}
+                        </div>
+                      )}
+
+                      <Link href={`/marketplace/${listing.id}`} className="block">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-[11px] font-semibold h-7 border-slate-200 hover:border-[#841d37] hover:text-[#841d37]"
+                        >
+                          View & Propose Swap
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Dashboard Grid */}
