@@ -1,4 +1,7 @@
 {
-  "/marketplace/page": "app/marketplace/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/swap-requests/[id]/page": "app/swap-requests/[id]/page.js",
+  "/swap-requests/[id]/chat/page": "app/swap-requests/[id]/chat/page.js",
+  "/swap-requests/page": "app/swap-requests/page.js",
   "/page": "app/page.js"
 }

@@ -198,15 +198,22 @@ export default function SwapRequestDetailPage() {
 
       {/* Status Highlights Banner */}
       {swapRequest.status === 'ACCEPTED' && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start space-x-3">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-          <div className="text-xs text-emerald-900 space-y-1">
-            <p className="font-bold text-sm">Swap Request Confirmed!</p>
-            <p>
-              Both garments have been automatically marked as <span className="font-bold uppercase">RESERVED</span> so
-              they cannot be claimed by other members.
-            </p>
+        <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start space-x-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-900 space-y-1">
+              <p className="font-bold text-sm">Swap Request Confirmed!</p>
+              <p>
+                Both garments are now <span className="font-bold uppercase">RESERVED</span>. Connect directly via real-time chat to coordinate exchange location, size questions, or delivery.
+              </p>
+            </div>
           </div>
+          <Link href={`/swap-requests/${swapRequestId}/chat`} className="shrink-0">
+            <Button className="w-full sm:w-auto bg-[#841d37] hover:bg-[#731c33] text-white rounded-full text-xs font-semibold px-5 shadow-xs">
+              <MessageSquare className="h-4 w-4 mr-1.5" />
+              Open Live Negotiation Chat
+            </Button>
+          </Link>
         </div>
       )}
 

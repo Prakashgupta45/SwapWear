@@ -66,6 +66,7 @@ model User {
   listings             ClothingListing[]
   sentSwapRequests     SwapRequest[]     @relation("SentSwapRequests")
   receivedSwapRequests SwapRequest[]     @relation("ReceivedSwapRequests")
+  messages             Message[]
 
   @@index([email])
   @@index([role])
@@ -125,6 +126,7 @@ model SwapRequest {
   recipient        User            @relation("ReceivedSwapRequests", fields: [recipientId], references: [id], onDelete: Cascade)
   offeredListing   ClothingListing @relation("OfferedInSwaps", fields: [offeredListingId], references: [id], onDelete: Cascade)
   requestedListing ClothingListing @relation("RequestedInSwaps", fields: [requestedListingId], references: [id], onDelete: Cascade)
+  conversation     Conversation?
 
   @@index([requesterId])
   @@index([recipientId])
@@ -132,5 +134,36 @@ model SwapRequest {
   @@index([requestedListingId])
   @@index([status])
   @@map("swap_requests")
+}
+
+model Conversation {
+  id            String       @id @default(uuid())
+  swapRequestId String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  swapRequest   SwapRequest  @relation(fields: [swapRequestId], references: [id], onDelete: Cascade)
+  messages      Message[]
+
+  @@index([swapRequestId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("messages")
 }
 

@@ -24,6 +24,7 @@ import {
   Inbox,
   Send,
   ExternalLink,
+  MessageSquare,
 } from 'lucide-react';
 
 export default function SwapRequestsPage() {
@@ -33,6 +34,10 @@ export default function SwapRequestsPage() {
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
   const [sentRequests, setSentRequests] = useState<SwapRequest[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<SwapRequest[]>([]);
+  const [unreadSummary, setUnreadSummary] = useState<{
+    totalUnread: number;
+    bySwapRequest: Record<string, number>;
+  }>({ totalUnread: 0, bySwapRequest: {} });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -40,9 +45,10 @@ export default function SwapRequestsPage() {
   const fetchRequests = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [sentRes, receivedRes] = await Promise.all([
+      const [sentRes, receivedRes, unreadRes] = await Promise.all([
         api.getSentSwapRequests(),
         api.getReceivedSwapRequests(),
+        api.getUnreadSummary().catch(() => ({ success: false, data: { totalUnread: 0, bySwapRequest: {} } })),
       ]);
 
       if (sentRes.success && sentRes.data?.swapRequests) {
@@ -50,6 +56,9 @@ export default function SwapRequestsPage() {
       }
       if (receivedRes.success && receivedRes.data?.swapRequests) {
         setReceivedRequests(receivedRes.data.swapRequests);
+      }
+      if (unreadRes.success && unreadRes.data) {
+        setUnreadSummary(unreadRes.data);
       }
     } catch (err: any) {
       setFeedback({
@@ -238,43 +247,58 @@ export default function SwapRequestsPage() {
         </Alert>
       )}
 
-      {/* Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-200">
-        <button
-          type="button"
-          onClick={() => setActiveTab('received')}
-          className={`flex items-center space-x-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
-            activeTab === 'received'
-              ? 'border-[#841d37] text-[#841d37]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Inbox className="h-4 w-4" />
-          <span>Received Offers</span>
-          {pendingReceivedCount > 0 && (
-            <span className="ml-1.5 px-2 py-0.5 text-[10px] font-bold bg-[#841d37] text-white rounded-full">
-              {pendingReceivedCount}
-            </span>
-          )}
-        </button>
+      {/* Tabs & Chat Indicator */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 gap-3">
+        <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('received')}
+            className={`flex items-center space-x-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+              activeTab === 'received'
+                ? 'border-[#841d37] text-[#841d37]'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Inbox className="h-4 w-4" />
+            <span>Received Offers</span>
+            {pendingReceivedCount > 0 && (
+              <span className="ml-1.5 px-2 py-0.5 text-[10px] font-bold bg-[#841d37] text-white rounded-full">
+                {pendingReceivedCount}
+              </span>
+            )}
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('sent')}
-          className={`flex items-center space-x-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
-            activeTab === 'sent'
-              ? 'border-[#841d37] text-[#841d37]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Send className="h-4 w-4" />
-          <span>Sent Proposals</span>
-          {pendingSentCount > 0 && (
-            <span className="ml-1.5 px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
-              {pendingSentCount}
+          <button
+            type="button"
+            onClick={() => setActiveTab('sent')}
+            className={`flex items-center space-x-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+              activeTab === 'sent'
+                ? 'border-[#841d37] text-[#841d37]'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Send className="h-4 w-4" />
+            <span>Sent Proposals</span>
+            {pendingSentCount > 0 && (
+              <span className="ml-1.5 px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
+                {pendingSentCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Phase 5 Chat Indicator */}
+        <div className="flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 bg-rose-50 border border-rose-200 rounded-full text-[#841d37] self-start sm:self-auto mb-2 sm:mb-0">
+          <MessageSquare className="h-3.5 w-3.5" />
+          <span>Chat indicator:</span>
+          {unreadSummary.totalUnread > 0 ? (
+            <span className="bg-[#841d37] text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
+              Unread {unreadSummary.totalUnread}
             </span>
+          ) : (
+            <span className="text-slate-500 font-normal">All caught up</span>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Requests List */}
@@ -437,13 +461,31 @@ export default function SwapRequestsPage() {
                     </p>
 
                     {/* Actions */}
-                    <div className="flex items-center space-x-2 pt-1">
+                    <div className="flex items-center space-x-2 pt-1 flex-wrap gap-y-2">
                       <Link href={`/swap-requests/${req.id}`}>
                         <Button variant="outline" size="sm" className="h-8 text-xs font-semibold rounded-full px-3">
                           Details
                           <ExternalLink className="h-3 w-3 ml-1" />
                         </Button>
                       </Link>
+
+                      {/* Phase 5 Live Chat button for Accepted Swaps */}
+                      {req.status === 'ACCEPTED' && (
+                        <Link href={`/swap-requests/${req.id}/chat`}>
+                          <Button
+                            size="sm"
+                            className="h-8 text-xs font-semibold bg-[#841d37] hover:bg-[#731c33] text-white rounded-full px-3.5 shadow-2xs relative"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                            Chat & Negotiate
+                            {Boolean(unreadSummary.bySwapRequest[req.id]) && (
+                              <span className="ml-1.5 px-1.5 py-0.2 text-[9px] font-extrabold bg-white text-[#841d37] rounded-full">
+                                {unreadSummary.bySwapRequest[req.id]}
+                              </span>
+                            )}
+                          </Button>
+                        </Link>
+                      )}
 
                       {activeTab === 'received' && isPending && (
                         <>

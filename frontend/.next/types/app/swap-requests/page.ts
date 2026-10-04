@@ -1,8 +1,8 @@
-// File: C:\Users\PRAKASH\Desktop\SwapWear\frontend\src\app\marketplace\page.tsx
-import * as entry from '../../../../src/app/marketplace/page.js'
+// File: C:\Users\PRAKASH\Desktop\SwapWear\frontend\src\app\swap-requests\page.tsx
+import * as entry from '../../../../src/app/swap-requests/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../src/app/marketplace/page.js')
+type TEntry = typeof import('../../../../src/app/swap-requests/page.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

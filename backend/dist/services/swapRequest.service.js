@@ -180,6 +180,12 @@ class SwapRequestService {
                 data: { status: client_1.SwapRequestStatus.ACCEPTED },
                 include: exports.SWAP_REQUEST_INCLUDE,
             });
+            // Initialize conversation for the accepted swap request
+            await tx.conversation.upsert({
+                where: { swapRequestId: id },
+                create: { swapRequestId: id },
+                update: {},
+            });
             return updated;
         });
     }
