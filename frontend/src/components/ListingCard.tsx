@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ClothingListing } from '../types/listing';
 import { Badge } from './ui/badge';
@@ -13,6 +13,16 @@ interface ListingCardProps {
 
 export function ListingCard({ listing, originalPrice }: ListingCardProps) {
   const [isLiked, setIsLiked] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  const primaryImage =
+    listing.images && listing.images.length > 0 ? listing.images[0].imageUrl : null;
+
+  // Reset error state whenever the image URL changes
+  useEffect(() => {
+    setImgError(false);
+  }, [primaryImage]);
+
   const [likesCount, setLikesCount] = useState(
     Math.floor((listing.title.charCodeAt(0) || 7) % 15) + 2
   );
@@ -29,8 +39,7 @@ export function ListingCard({ listing, originalPrice }: ListingCardProps) {
     }
   };
 
-  const primaryImage =
-    listing.images && listing.images.length > 0 ? listing.images[0].imageUrl : null;
+  // (primaryImage already declared above)
 
   // Approximate retail price if not provided for consignment styling
   const estimatedValue = listing.estimatedSwapValue || 45;
@@ -49,11 +58,12 @@ export function ListingCard({ listing, originalPrice }: ListingCardProps) {
     <article className="group flex flex-col bg-white border border-slate-200/90 rounded-lg overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200">
       {/* Image Container with Zoom and Overlays */}
       <Link href={`/marketplace/${listing.id}`} className="relative aspect-square w-full bg-slate-100 overflow-hidden block">
-        {primaryImage ? (
+        {primaryImage && !imgError ? (
           <img
             src={primaryImage}
             alt={listing.title}
             loading="lazy"
+            onError={() => setImgError(true)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
         ) : (

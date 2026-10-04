@@ -49,6 +49,7 @@ export async function authenticate(
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         createdAt: true,
         updatedAt: true,
       },

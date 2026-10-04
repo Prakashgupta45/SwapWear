@@ -10,7 +10,6 @@ import { ListingCard } from '../components/ListingCard';
 import {
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Package,
@@ -67,12 +66,18 @@ const POPULAR_BRANDS = [
 ];
 
 const DEPARTMENT_TILES = [
-  { name: 'Women', href: '/marketplace?department=women', img: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Men', href: '/marketplace?department=men', img: 'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Kids', href: '/marketplace?department=kids', img: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Shoes', href: '/marketplace?category=FOOTWEAR', img: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Handbags', href: '/marketplace?category=ACCESSORIES', img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Women', href: '/marketplace?department=women', img: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Men', href: '/marketplace?department=men', img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Kids', href: '/marketplace?department=kids', img: 'https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Home', href: '/marketplace?q=home', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Pets', href: '/marketplace?q=pets', img: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Electronics', href: '/marketplace?q=electronics', img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80' },
   { name: 'Luxury', href: '/marketplace?sort=price_desc&q=luxury', img: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Beauty', href: '/marketplace?category=ACCESSORIES&q=beauty', img: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Plus', href: '/marketplace?size=XL', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Petite', href: '/marketplace?size=XS', img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Trending', href: '/marketplace?sort=newest', img: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80' },
+  { name: 'Brand', href: '/marketplace?sort=newest', img: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80' },
 ];
 
 export default function HomePage() {
@@ -132,7 +137,6 @@ export default function HomePage() {
         <div className="relative mx-auto flex min-h-[460px] sm:min-h-[520px] lg:min-h-[560px] max-w-7xl items-center px-6 sm:px-12 lg:px-16 py-16">
           <div className="max-w-2xl space-y-6 text-left">
             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white/90">
-              <Sparkles className="h-4 w-4 text-[#e04768]" />
               {currentSlide.subtitle}
             </span>
 

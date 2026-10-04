@@ -31,6 +31,11 @@ export const updateProfileSchema = z.object({
     .regex(/^\d{5,10}$/, 'Pincode must be 5-10 digits')
     .optional()
     .nullable(),
+  avatarUrl: z
+    .string()
+    .trim()
+    .optional()
+    .nullable(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

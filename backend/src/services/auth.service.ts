@@ -45,6 +45,7 @@ export class AuthService {
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -94,6 +95,7 @@ export class AuthService {
       name: user.name,
       email: user.email,
       role: user.role,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -112,6 +114,7 @@ export class AuthService {
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         createdAt: true,
         updatedAt: true,
       },

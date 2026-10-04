@@ -10,7 +10,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
 import { Alert } from '../../components/ui/alert';
-import { Sparkles, ArrowRight, Check, X } from 'lucide-react';
+import { ArrowRight, Check, X } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -87,10 +87,7 @@ export default function RegisterPage() {
     <div className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 rounded-2xl bg-forest-700 text-white items-center justify-center shadow-md">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Join SwapWear</h1>
+          <h1 className="text-3xl font-serif font-black text-slate-900 tracking-tight">Join SwapWear</h1>
           <p className="text-sm text-slate-500">Create your account to start exchanging pre-loved clothing</p>
         </div>
 
@@ -210,7 +207,7 @@ export default function RegisterPage() {
 
               <p className="text-xs text-center text-slate-500">
                 Already have an account?{' '}
-                <Link href="/login" className="font-semibold text-forest-700 hover:underline">
+                <Link href="/login" className="font-semibold text-[#841d37] hover:text-[#731c33] hover:underline">
                   Sign in
                 </Link>
               </p>

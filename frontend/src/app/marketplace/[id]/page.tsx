@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import { CURATED_SHOWCASE_LISTINGS } from '../../../lib/curatedListings';
+import { SwapRequestModal } from '../../../components/SwapRequestModal';
 
 export default function MarketplaceListingDetailPage() {
   const params = useParams();
@@ -28,6 +29,7 @@ export default function MarketplaceListingDetailPage() {
 
   const [listing, setListing] = useState<ClothingListing | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +62,7 @@ export default function MarketplaceListingDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
-        <Loader2 className="h-8 w-8 animate-spin text-forest-900" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#841d37]" />
         <p className="text-xs font-semibold text-slate-500">Loading item details...</p>
       </div>
     );
@@ -133,7 +135,7 @@ export default function MarketplaceListingDetailPage() {
                   aria-label={`View photo ${idx + 1} of ${images.length}`}
                   aria-pressed={selectedImageIndex === idx}
                   className={`h-20 w-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${
-                    selectedImageIndex === idx ? 'border-forest-900 ring-2 ring-forest-900/20' : 'border-slate-200 opacity-70 hover:opacity-100'
+                    selectedImageIndex === idx ? 'border-[#841d37] ring-2 ring-[#841d37]/20' : 'border-slate-200 opacity-70 hover:opacity-100'
                   }`}
                 >
                   <img src={img.imageUrl} alt={`${listing.title}, photo ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" />
@@ -148,7 +150,7 @@ export default function MarketplaceListingDetailPage() {
           <div className="space-y-5">
             {/* Title & Brand */}
             <div className="space-y-1">
-              <span className="text-xs font-bold text-forest-900 uppercase tracking-widest block">
+              <span className="text-xs font-bold text-[#841d37] uppercase tracking-widest block">
                 {listing.brand || 'Unbranded'}
               </span>
               <h1 className="text-3xl font-serif font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -191,14 +193,14 @@ export default function MarketplaceListingDetailPage() {
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Listed By Swapper</span>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 rounded-full bg-forest-900 text-white flex items-center justify-center font-bold text-sm">
+                  <div className="h-10 w-10 rounded-full bg-[#841d37] text-white flex items-center justify-center font-bold text-sm">
                     {listing.owner.name?.[0] || '?'}
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900">{listing.owner.name}</p>
                     {listing.owner.city && (
                       <p className="text-xs text-slate-500 flex items-center mt-0.5">
-                        <MapPin className="h-3 w-3 mr-1 text-forest-700" />
+                        <MapPin className="h-3 w-3 mr-1 text-[#841d37]" />
                         {[listing.owner.city, listing.owner.state].filter(Boolean).join(', ')}
                       </p>
                     )}
@@ -216,25 +218,58 @@ export default function MarketplaceListingDetailPage() {
           <div className="space-y-3 pt-4 border-t border-slate-100">
             {isOwner ? (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium">
-                You are the owner of this garment listing. You can manage or delete it in <Link href="/my-listings" className="underline font-bold">My Listings</Link>.
+                You are the owner of this garment listing. You can manage or delete it in{' '}
+                <Link href="/my-listings" className="underline font-bold">
+                  My Listings
+                </Link>.
+              </div>
+            ) : listing.status !== 'AVAILABLE' ? (
+              <div className="space-y-2">
+                <Button
+                  size="lg"
+                  disabled
+                  className="w-full bg-slate-300 text-slate-500 font-bold py-3.5 rounded-lg text-sm cursor-not-allowed"
+                >
+                  Item {listing.status}
+                </Button>
+                <p className="text-center text-xs text-slate-400">
+                  This item is currently {listing.status.toLowerCase()} and cannot be requested for swap.
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
                 <Button
                   size="lg"
-                  disabled
-                  title="Swap requests are not available yet"
-                  className="w-full bg-forest-900 text-white font-bold py-3.5 rounded-lg shadow-md text-sm"
+                  onClick={() => {
+                    if (!user) {
+                      router.push(`/login?redirect=/marketplace/${listingId}`);
+                      return;
+                    }
+                    setIsSwapModalOpen(true);
+                  }}
+                  className="w-full bg-[#841d37] hover:bg-[#731c33] text-white font-bold py-3.5 rounded-lg shadow-md text-sm transition-all"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Request Swap
                 </Button>
-                <p className="text-center text-xs text-slate-500">Swap requests are not available yet.</p>
+                <p className="text-center text-xs text-slate-500">
+                  Propose an exchange with an item from your closet
+                </p>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Phase 4 Swap Request Modal */}
+      {listing && (
+        <SwapRequestModal
+          isOpen={isSwapModalOpen}
+          onClose={() => setIsSwapModalOpen(false)}
+          requestedListing={listing}
+        />
+      )}
     </div>
   );
 }
+

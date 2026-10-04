@@ -28,7 +28,7 @@ export class ListingController {
   static async getListings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const filterParams: ListingFilterParams = {
-        search: (req.query.search || req.query.q) as string | undefined,
+        search: (req.query.search || req.query.q || req.query.query || req.query.department) as string | undefined,
         category: req.query.category as Category | undefined,
         brand: req.query.brand as string | undefined,
         size: req.query.size as string | undefined,
