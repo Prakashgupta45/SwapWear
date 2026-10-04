@@ -230,6 +230,55 @@ class ApiClient {
       method: 'PATCH',
     });
   }
+
+  // Phase 5: Chat & Real-Time Negotiation
+  async getConversation(swapRequestId: string): Promise<import('../types/chat').ConversationResponse> {
+    return this.request(`/conversations/${swapRequestId}`, {
+      method: 'GET',
+    });
+  }
+
+  async getMessages(
+    swapRequestId: string,
+    page: number = 1,
+    limit: number = 50
+  ): Promise<import('../types/chat').MessagesResponse> {
+    return this.request(`/conversations/${swapRequestId}/messages?page=${page}&limit=${limit}`, {
+      method: 'GET',
+    });
+  }
+
+  async sendMessage(
+    swapRequestId: string,
+    content: string
+  ): Promise<import('../types/chat').SendMessageResponse> {
+    return this.request(`/conversations/${swapRequestId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async markMessageAsRead(
+    messageId: string
+  ): Promise<{ success: boolean; data: { message: import('../types/chat').ChatMessage } }> {
+    return this.request(`/messages/${messageId}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markConversationAsRead(
+    swapRequestId: string
+  ): Promise<{ success: boolean; data: { count: number } }> {
+    return this.request(`/conversations/${swapRequestId}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async getUnreadSummary(): Promise<import('../types/chat').UnreadSummaryResponse> {
+    return this.request('/conversations/unread-summary', {
+      method: 'GET',
+    });
+  }
 }
 
 export const api = new ApiClient();

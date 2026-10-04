@@ -213,6 +213,13 @@ export class SwapRequestService {
         include: SWAP_REQUEST_INCLUDE,
       });
 
+      // Initialize conversation for the accepted swap request
+      await tx.conversation.upsert({
+        where: { swapRequestId: id },
+        create: { swapRequestId: id },
+        update: {},
+      });
+
       return updated;
     });
   }
