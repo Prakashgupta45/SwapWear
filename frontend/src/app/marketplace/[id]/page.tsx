@@ -116,6 +116,7 @@ export default function MarketplaceListingDetailPage() {
                 src={currentImageUrl}
                 alt={listing.title}
                 fetchPriority="high"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -140,7 +141,7 @@ export default function MarketplaceListingDetailPage() {
                     selectedImageIndex === idx ? 'border-[#841d37] ring-2 ring-[#841d37]/20' : 'border-slate-200 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={img.imageUrl} alt={`${listing.title}, photo ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" />
+                  <img src={img.imageUrl} alt={`${listing.title}, photo ${idx + 1}`} loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

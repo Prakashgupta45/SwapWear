@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Radio,
   RefreshCw,
+  Shield,
 } from 'lucide-react';
 
 const SEARCH_TYPES = ['Listings', 'Closets', 'Brands', 'Boutiques'];
@@ -624,6 +625,17 @@ export function Navbar() {
                     <LayoutDashboard className="h-3.5 w-3.5 mr-2 text-[#841d37]" />
                     Account Dashboard
                   </Link>
+
+                  {user?.role === 'ADMIN' && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50"
+                    >
+                      <Shield className="h-3.5 w-3.5 mr-2 text-rose-600" />
+                      Admin Panel
+                    </Link>
+                  )}
 
                   <div className="border-t border-slate-100 my-1" />
 

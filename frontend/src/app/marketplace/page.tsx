@@ -348,6 +348,7 @@ function MarketplaceContent() {
                     <img
                       src={cat.img}
                       alt={cat.label}
+                      referrerPolicy="no-referrer"
                       className="h-full w-full rounded-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>

@@ -234,6 +234,9 @@ describe('Phase 6: Location-Based & Value-Based Swap Matching Suite', () => {
 
       // Alice's own second listing should NEVER appear in matches for her first listing
       expect(matchedIds).not.toContain(resA2.body.data.listing.id);
+
+      // Clean up second listing so it does not affect subsequent tests
+      await prisma.clothingListing.delete({ where: { id: resA2.body.data.listing.id } });
     });
 
     it('filters matches by cityOnly parameter', async () => {

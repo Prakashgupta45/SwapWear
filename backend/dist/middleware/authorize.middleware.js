@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.requireAdmin = void 0;
 exports.authorizeRoles = authorizeRoles;
+const auth_middleware_1 = require("./auth.middleware");
 function authorizeRoles(...roles) {
     return (req, res, next) => {
         if (!req.user) {
@@ -20,3 +22,4 @@ function authorizeRoles(...roles) {
         next();
     };
 }
+exports.requireAdmin = [auth_middleware_1.authenticate, authorizeRoles('ADMIN')];

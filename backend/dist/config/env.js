@@ -16,4 +16,9 @@ exports.env = {
     COOKIE_SECRET: process.env.COOKIE_SECRET || 'fallback_cookie_secret_swapwear_2026',
     FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
     isProduction: process.env.NODE_ENV === 'production',
+    AI_PROVIDER: process.env.AI_PROVIDER || 'gemini',
+    AI_API_KEY: process.env.AI_API_KEY || '',
+    AI_MODEL: process.env.AI_MODEL || 'gemini-1.5-flash',
+    AI_WEIGHT: process.env.AI_WEIGHT ? parseFloat(process.env.AI_WEIGHT) : 0.30,
+    RULE_WEIGHT: process.env.RULE_WEIGHT ? parseFloat(process.env.RULE_WEIGHT) : 0.70,
 };

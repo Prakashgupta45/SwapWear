@@ -14,9 +14,9 @@ const listing_routes_1 = __importDefault(require("./routes/listing.routes"));
 const swapRequest_routes_1 = __importDefault(require("./routes/swapRequest.routes"));
 const chat_routes_1 = require("./routes/chat.routes");
 const match_routes_1 = __importDefault(require("./routes/match.routes"));
+const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
+const aiRecommendation_routes_1 = __importDefault(require("./routes/aiRecommendation.routes"));
 const error_middleware_1 = require("./middleware/error.middleware");
-const auth_middleware_1 = require("./middleware/auth.middleware");
-const authorize_middleware_1 = require("./middleware/authorize.middleware");
 const createApp = () => {
     const app = (0, express_1.default)();
     // Middleware
@@ -40,14 +40,8 @@ const createApp = () => {
     app.use('/api/conversations', chat_routes_1.conversationRoutes);
     app.use('/api/messages', chat_routes_1.messageRoutes);
     app.use('/api/matches', match_routes_1.default);
-    // Protected Admin route for testing role-based authorization
-    app.get('/api/admin/check', auth_middleware_1.authenticate, (0, authorize_middleware_1.authorizeRoles)('ADMIN'), (req, res) => {
-        res.status(200).json({
-            success: true,
-            message: 'Admin access granted.',
-            user: req.user,
-        });
-    });
+    app.use('/api/admin', admin_routes_1.default);
+    app.use('/api/ai', aiRecommendation_routes_1.default);
     // Global Error Handler
     app.use(error_middleware_1.errorHandler);
     return app;

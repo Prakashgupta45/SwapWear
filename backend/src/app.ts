@@ -8,10 +8,9 @@ import listingRoutes from './routes/listing.routes';
 import swapRequestRoutes from './routes/swapRequest.routes';
 import { conversationRoutes, messageRoutes } from './routes/chat.routes';
 import matchRoutes from './routes/match.routes';
+import adminRoutes from './routes/admin.routes';
+import aiRoutes from './routes/aiRecommendation.routes';
 import { errorHandler } from './middleware/error.middleware';
-import { authenticate } from './middleware/auth.middleware';
-import { authorizeRoles } from './middleware/authorize.middleware';
-import { AuthenticatedRequest } from './types';
 
 export const createApp = (): Application => {
   const app = express();
@@ -41,20 +40,8 @@ export const createApp = (): Application => {
   app.use('/api/conversations', conversationRoutes);
   app.use('/api/messages', messageRoutes);
   app.use('/api/matches', matchRoutes);
-
-  // Protected Admin route for testing role-based authorization
-  app.get(
-    '/api/admin/check',
-    authenticate,
-    authorizeRoles('ADMIN'),
-    (req: AuthenticatedRequest, res) => {
-      res.status(200).json({
-        success: true,
-        message: 'Admin access granted.',
-        user: req.user,
-      });
-    }
-  );
+  app.use('/api/admin', adminRoutes);
+  app.use('/api/ai', aiRoutes);
 
   // Global Error Handler
   app.use(errorHandler);
