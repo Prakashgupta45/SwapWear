@@ -1,1 +1,8 @@
+
 node_modules
+
+# Local environment secrets
+backend/.env
+
+# Generated Next.js files
+frontend/.next/

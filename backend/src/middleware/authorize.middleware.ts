@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { Role } from '@prisma/client';
+import { authenticate } from './auth.middleware';
 
 export function authorizeRoles(...roles: Role[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
@@ -23,3 +24,5 @@ export function authorizeRoles(...roles: Role[]) {
     next();
   };
 }
+
+export const requireAdmin = [authenticate, authorizeRoles('ADMIN')];

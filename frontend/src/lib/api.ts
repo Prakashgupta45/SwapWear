@@ -320,7 +320,205 @@ class ApiClient {
       body: JSON.stringify({ sourceListingId, targetListingId }),
     });
   }
+
+  // Phase 8: AI-Powered Personalized Swap Recommendations
+  async getAiRecommendations(params?: {
+    limit?: number;
+    minScore?: number;
+    bypassCache?: boolean;
+  }): Promise<import('../types/ai').AiRecommendationsResponse> {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.minScore) query.set('minScore', params.minScore.toString());
+    if (params?.bypassCache) query.set('bypassCache', 'true');
+
+    const qs = query.toString();
+    return this.request(`/ai/recommendations${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  // ── Phase 7: Admin Panel APIs ──────────────────────────────────────────────
+
+  async getAdminAnalytics(): Promise<{ success: boolean; data: import('../types/admin').AdminAnalytics }> {
+    return this.request('/admin/analytics', {
+      method: 'GET',
+    });
+  }
+
+  async getAdminUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      users: import('../types/admin').AdminUser[];
+      pagination: import('../types/admin').AdminPagination;
+    };
+  }> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.search) query.set('search', params.search);
+    if (params?.role && params.role !== 'ALL') query.set('role', params.role);
+
+    const qs = query.toString();
+    return this.request(`/admin/users${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async getAdminUserById(id: string): Promise<{
+    success: boolean;
+    data: { user: import('../types/admin').AdminUser };
+  }> {
+    return this.request(`/admin/users/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async updateAdminUserRole(
+    id: string,
+    role: 'USER' | 'ADMIN'
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: { user: import('../types/admin').AdminUser };
+  }> {
+    return this.request(`/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async getAdminListings(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    condition?: string;
+    status?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      listings: import('../types/admin').AdminListing[];
+      pagination: import('../types/admin').AdminPagination;
+    };
+  }> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.search) query.set('search', params.search);
+    if (params?.category && params.category !== 'ALL') query.set('category', params.category);
+    if (params?.condition && params.condition !== 'ALL') query.set('condition', params.condition);
+    if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+
+    const qs = query.toString();
+    return this.request(`/admin/listings${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async getAdminListingById(id: string): Promise<{
+    success: boolean;
+    data: { listing: import('../types/admin').AdminListing };
+  }> {
+    return this.request(`/admin/listings/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async moderateListing(
+    id: string,
+    action: 'REMOVE' | 'RESTORE'
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: any;
+  }> {
+    return this.request(`/admin/listings/${id}/moderate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action }),
+    });
+  }
+
+  async getAdminSwaps(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      swaps: import('../types/admin').AdminSwap[];
+      pagination: import('../types/admin').AdminPagination;
+    };
+  }> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+    if (params?.search) query.set('search', params.search);
+
+    const qs = query.toString();
+    return this.request(`/admin/swaps${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async getAdminSwapById(id: string): Promise<{
+    success: boolean;
+    data: { swap: import('../types/admin').AdminSwap };
+  }> {
+    return this.request(`/admin/swaps/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async getAdminConversations(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    success: boolean;
+    data: {
+      conversations: import('../types/admin').AdminConversation[];
+      pagination: import('../types/admin').AdminPagination;
+    };
+  }> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+
+    const qs = query.toString();
+    return this.request(`/admin/conversations${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
+  async getAdminConversationAudit(
+    id: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<{
+    success: boolean;
+    data: {
+      conversation: any;
+      messages: any[];
+      pagination: import('../types/admin').AdminPagination;
+    };
+  }> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+
+    const qs = query.toString();
+    return this.request(`/admin/conversations/${id}${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    });
+  }
 }
 
 export const api = new ApiClient();
+
 

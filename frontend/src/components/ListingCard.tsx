@@ -63,6 +63,7 @@ export function ListingCard({ listing, originalPrice }: ListingCardProps) {
             src={primaryImage}
             alt={listing.title}
             loading="lazy"
+            referrerPolicy="no-referrer"
             onError={() => setImgError(true)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
