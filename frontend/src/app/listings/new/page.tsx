@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthGuard } from '../../../components/AuthGuard';
@@ -10,7 +9,9 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../../components/ui/card';
 import { Alert } from '../../../components/ui/alert';
-import { PlusCircle, ArrowLeft } from 'lucide-react';
+import { PlusCircle, ArrowLeft, Sparkles, RefreshCw } from 'lucide-react';
+import { AiConditionCard } from '../../../components/AiConditionCard';
+import { ConditionVerificationResult } from '../../../types/listing';
 import Link from 'next/link';
 
 export default function NewListingPage() {
@@ -31,6 +32,8 @@ export default function NewListingPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isAnalyzingCondition, setIsAnalyzingCondition] = useState<boolean>(false);
+  const [aiAssessment, setAiAssessment] = useState<ConditionVerificationResult | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -43,6 +46,56 @@ export default function NewListingPage() {
       });
     }
     setGlobalError(null);
+  };
+
+  const handleAnalyzeCondition = async () => {
+    if (!formData.imageUrl.trim()) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        imageUrl: 'Please enter a valid image URL first to analyze condition.',
+      }));
+      return;
+    }
+
+    setIsAnalyzingCondition(true);
+    setGlobalError(null);
+    try {
+      const res = await api.preCheckCondition({
+        imageUrl: formData.imageUrl.trim(),
+        declaredCondition: formData.condition,
+        category: formData.category,
+        title: formData.title.trim() || undefined,
+        brand: formData.brand.trim() || undefined,
+      });
+
+      if (res.success && res.data) {
+        setAiAssessment(res.data);
+      }
+    } catch (err: any) {
+      setGlobalError(err.message || 'Condition analysis is temporarily unavailable.');
+    } finally {
+      setIsAnalyzingCondition(false);
+    }
+  };
+
+  const handleApplyAiCondition = () => {
+    if (aiAssessment?.estimatedCondition) {
+      setFormData((prev) => ({
+        ...prev,
+        condition: aiAssessment.estimatedCondition as string,
+      }));
+      // Recalculate mismatch locally
+      setAiAssessment((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          declaredCondition: prev.estimatedCondition!,
+          mismatch: false,
+          differenceLevels: 0,
+          verificationStatus: 'CONSISTENT',
+        };
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +129,8 @@ export default function NewListingPage() {
       });
 
       if (res.success && res.data?.listing) {
+        // Trigger condition verification for the created listing in background
+        api.verifyListingCondition(res.data.listing.id).catch(() => {});
         router.push('/my-listings');
       }
     } catch (err: any) {
@@ -236,21 +291,67 @@ export default function NewListingPage() {
                 )}
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  name="imageUrl"
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={formData.imageUrl}
-                  onChange={handleChange}
-                  error={fieldErrors.imageUrl}
-                  disabled={isSubmitting}
-                />
-                <p className="text-xs text-slate-400">
-                  Provide a valid image URL ending in .jpg, .jpeg, .png, .webp, or .gif.
-                </p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="imageUrl">Image URL</Label>
+                    {formData.imageUrl.trim() && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAnalyzeCondition}
+                        disabled={isAnalyzingCondition || isSubmitting}
+                        className="h-7 text-xs text-forest-700 hover:text-forest-800 border-forest-200 bg-forest-50/50"
+                      >
+                        <Sparkles className={`h-3 w-3 mr-1 text-forest-600 ${isAnalyzingCondition ? 'animate-spin' : ''}`} />
+                        {isAnalyzingCondition ? 'Analyzing...' : 'Analyze Condition with AI'}
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    id="imageUrl"
+                    name="imageUrl"
+                    type="url"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    value={formData.imageUrl}
+                    onChange={handleChange}
+                    error={fieldErrors.imageUrl}
+                    disabled={isSubmitting}
+                  />
+                  <p className="text-xs text-slate-400">
+                    Provide a valid image URL ending in .jpg, .jpeg, .png, .webp, or .gif.
+                  </p>
+                </div>
+
+                {/* AI Condition Assessment Card */}
+                {aiAssessment && (
+                  <div className="space-y-2 pt-1 animate-in fade-in duration-200">
+                    <AiConditionCard
+                      assessment={aiAssessment}
+                      canReanalyze
+                      onReanalyze={handleAnalyzeCondition}
+                      isReanalyzing={isAnalyzingCondition}
+                    />
+
+                    {aiAssessment.mismatch && aiAssessment.estimatedCondition && aiAssessment.estimatedCondition !== formData.condition && (
+                      <div className="flex items-center justify-between p-2.5 bg-amber-50/90 border border-amber-200 rounded-lg text-xs">
+                        <span className="text-amber-800 font-medium">
+                          Update declared condition to <strong>{aiAssessment.estimatedCondition.replace('_', ' ')}</strong>?
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleApplyAiCondition}
+                          className="h-6 text-[11px] px-2 border-amber-300 text-amber-900 bg-white hover:bg-amber-100/50"
+                        >
+                          Use AI Estimate
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
 

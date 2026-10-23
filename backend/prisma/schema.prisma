@@ -85,6 +85,16 @@ model ClothingListing {
   condition          Condition
   estimatedSwapValue Float?
   status             ListingStatus @default(AVAILABLE)
+
+  // Phase 9: AI Condition Verification
+  aiCondition          Condition?
+  aiConfidence         Float?
+  aiVerificationStatus String?       @default("NOT_ANALYZED")
+  aiVisibleIssues      String[]      @default([])
+  aiImageQuality       String?
+  aiRecommendation     String?
+  aiAnalyzedAt         DateTime?
+
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -96,6 +106,7 @@ model ClothingListing {
   @@index([ownerId])
   @@index([status])
   @@index([category])
+  @@index([aiVerificationStatus])
   @@map("clothing_listings")
 }
 

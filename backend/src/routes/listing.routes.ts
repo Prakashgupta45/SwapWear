@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ListingController } from '../controllers/listing.controller';
 import { MatchController } from '../controllers/match.controller';
+import { ConditionVerificationController } from '../controllers/conditionVerification.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { createListingSchema, updateListingSchema } from '../validations/listing.validation';
@@ -16,6 +17,10 @@ router.get('/my', authenticate, ListingController.getMyListings);
 
 // GET /api/listings/:id/matches — Phase 6: Top swap matches for this listing
 router.get('/:id/matches', MatchController.getListingMatches);
+
+// Phase 9: AI Condition Verification endpoints on listing resource
+router.post('/:id/condition-verification', authenticate, ConditionVerificationController.verifyListing);
+router.get('/:id/condition-verification', ConditionVerificationController.getListingVerification);
 
 // GET /api/listings/:id
 router.get('/:id', ListingController.getListingById);

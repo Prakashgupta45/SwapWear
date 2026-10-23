@@ -27,6 +27,13 @@ export interface ListingSummary {
   condition: Condition;
   estimatedSwapValue: number | null;
   status: ListingStatus;
+  aiCondition?: Condition | null;
+  aiConfidence?: number | null;
+  aiVerificationStatus?: string | null;
+  aiVisibleIssues?: string[];
+  aiImageQuality?: string | null;
+  aiRecommendation?: string | null;
+  aiAnalyzedAt?: Date | null;
   images: ListingImage[];
   owner: ListingOwner;
   createdAt: Date;
@@ -74,6 +81,13 @@ const LISTING_SELECT = {
   condition: true,
   estimatedSwapValue: true,
   status: true,
+  aiCondition: true,
+  aiConfidence: true,
+  aiVerificationStatus: true,
+  aiVisibleIssues: true,
+  aiImageQuality: true,
+  aiRecommendation: true,
+  aiAnalyzedAt: true,
   createdAt: true,
   updatedAt: true,
   images: {

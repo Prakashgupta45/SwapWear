@@ -23,6 +23,31 @@ export interface ListingOwner {
   state: string | null;
 }
 
+export type VerificationStatus =
+  | 'NOT_ANALYZED'
+  | 'CONSISTENT'
+  | 'REVIEW_RECOMMENDED'
+  | 'MISMATCH_WARNING'
+  | 'FAILED';
+
+export type ImageQuality = 'GOOD' | 'FAIR' | 'POOR';
+
+export interface ConditionVerificationResult {
+  verificationAvailable: boolean;
+  listingId?: string;
+  declaredCondition: Condition;
+  estimatedCondition: Condition | null;
+  confidence: number | null;
+  visibleIssues: string[];
+  imageQuality: ImageQuality | null;
+  recommendation: string;
+  mismatch: boolean;
+  differenceLevels: number;
+  verificationStatus: VerificationStatus;
+  analyzedAt: string | null;
+  notice: string;
+}
+
 export interface ClothingListing {
   id: string;
   ownerId?: string;
@@ -37,6 +62,13 @@ export interface ClothingListing {
   status: ListingStatus;
   images: ListingImage[];
   owner: ListingOwner;
+  aiCondition?: Condition | null;
+  aiConfidence?: number | null;
+  aiVerificationStatus?: VerificationStatus | null;
+  aiVisibleIssues?: string[];
+  aiImageQuality?: ImageQuality | null;
+  aiRecommendation?: string | null;
+  aiAnalyzedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

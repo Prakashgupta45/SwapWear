@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ClothingListing } from '../types/listing';
 import { Badge } from './ui/badge';
-import { Heart, MapPin, Shirt } from 'lucide-react';
+import { Heart, MapPin, Shirt, Sparkles } from 'lucide-react';
 
 interface ListingCardProps {
   listing: ClothingListing;
@@ -78,6 +78,17 @@ export function ListingCard({ listing, originalPrice }: ListingCardProps) {
         {listing.condition === 'NEW' && (
           <div className="absolute top-2 left-2 bg-[#841d37] text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded shadow-sm">
             NWT
+          </div>
+        )}
+
+        {/* AI Condition Checked badge */}
+        {listing.aiVerificationStatus && listing.aiVerificationStatus !== 'NOT_ANALYZED' && (
+          <div
+            title="AI Condition Checked"
+            className="absolute top-2 right-2 bg-black/65 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-xs flex items-center gap-1 z-10"
+          >
+            <Sparkles className="h-2.5 w-2.5 text-amber-300" />
+            AI Condition Checked
           </div>
         )}
 

@@ -2,6 +2,7 @@ import { AuthResponse, User } from '../types/auth';
 import { ProfileResponse, UserProfile } from '../types/profile';
 import {
   ClothingListing,
+  ConditionVerificationResult,
   ListingDetailResponse,
   ListingQueryParams,
   MyListingsResponse,
@@ -515,6 +516,46 @@ class ApiClient {
     const qs = query.toString();
     return this.request(`/admin/conversations/${id}${qs ? `?${qs}` : ''}`, {
       method: 'GET',
+    });
+  }
+
+  // ── Phase 9: AI Condition Verification ──────────────────────────────────
+  async verifyListingCondition(
+    id: string,
+    force = false
+  ): Promise<{
+    success: boolean;
+    data: ConditionVerificationResult;
+  }> {
+    return this.request(`/listings/${id}/condition-verification${force ? '?force=true' : ''}`, {
+      method: 'POST',
+    });
+  }
+
+  async getConditionVerification(
+    id: string
+  ): Promise<{
+    success: boolean;
+    data: ConditionVerificationResult;
+  }> {
+    return this.request(`/listings/${id}/condition-verification`, {
+      method: 'GET',
+    });
+  }
+
+  async preCheckCondition(payload: {
+    imageUrl: string;
+    declaredCondition: string;
+    category?: string;
+    title?: string;
+    brand?: string;
+  }): Promise<{
+    success: boolean;
+    data: ConditionVerificationResult;
+  }> {
+    return this.request('/condition-verification/pre-check', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   }
 }

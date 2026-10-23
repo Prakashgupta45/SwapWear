@@ -20,6 +20,9 @@ import {
   DollarSign,
   Loader2,
   ExternalLink,
+  Sparkles,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 
@@ -238,6 +241,7 @@ export default function AdminListingsPage() {
                   <th className="py-3.5 px-4">Category & Brand</th>
                   <th className="py-3.5 px-4">Owner</th>
                   <th className="py-3.5 px-4">Swap Value</th>
+                  <th className="py-3.5 px-4">AI Condition</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4">Listed Date</th>
                   <th className="py-3.5 px-4 text-right">Moderation</th>
@@ -297,6 +301,25 @@ export default function AdminListingsPage() {
                       {/* Value */}
                       <td className="py-3.5 px-4 font-mono font-bold text-slate-200">
                         ${item.estimatedSwapValue || 0}
+                      </td>
+
+                      {/* AI Condition Verification */}
+                      <td className="py-3.5 px-4">
+                        {item.aiVerificationStatus === 'CONSISTENT' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
+                            <Sparkles className="h-2.5 w-2.5" /> Consistent
+                          </span>
+                        ) : item.aiVerificationStatus === 'REVIEW_RECOMMENDED' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-400 border border-amber-800">
+                            <AlertTriangle className="h-2.5 w-2.5" /> Review Rec.
+                          </span>
+                        ) : item.aiVerificationStatus === 'MISMATCH_WARNING' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950/80 text-rose-400 border border-rose-800">
+                            <AlertCircle className="h-2.5 w-2.5" /> Mismatch
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 font-mono">Unchecked</span>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -466,6 +489,128 @@ export default function AdminListingsPage() {
                     (selectedListing._count?.requestedInSwaps || 0)}{' '}
                   swap offers
                 </span>
+              </div>
+            </div>
+
+            {/* Condition Review Card */}
+            <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-3 text-xs">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <span className="font-bold text-slate-200 flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Condition Review
+                </span>
+                {selectedListing.aiVerificationStatus && (
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    selectedListing.aiVerificationStatus === 'CONSISTENT'
+                      ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700/60'
+                      : selectedListing.aiVerificationStatus === 'REVIEW_RECOMMENDED'
+                      ? 'bg-amber-900/60 text-amber-300 border border-amber-700/60'
+                      : selectedListing.aiVerificationStatus === 'MISMATCH_WARNING'
+                      ? 'bg-rose-900/60 text-rose-300 border border-rose-700/60'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {selectedListing.aiVerificationStatus.replace('_', ' ')}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2 bg-slate-900 rounded-lg border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 block uppercase">Declared</span>
+                  <span className="font-bold text-slate-200">{selectedListing.condition}</span>
+                </div>
+                <div className="p-2 bg-slate-900 rounded-lg border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 block uppercase">AI Estimate</span>
+                  <span className="font-bold text-slate-200">{selectedListing.aiCondition || 'Not Analyzed'}</span>
+                </div>
+                <div className="p-2 bg-slate-900 rounded-lg border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 block uppercase">Confidence</span>
+                  <span className="font-bold text-emerald-400">
+                    {selectedListing.aiConfidence !== null && selectedListing.aiConfidence !== undefined
+                      ? `${selectedListing.aiConfidence}%`
+                      : 'N/A'}
+                  </span>
+                </div>
+              </div>
+
+              {selectedListing.aiRecommendation && (
+                <div className="text-[11px] text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                  <span className="text-slate-400 font-semibold block mb-0.5">AI Observation:</span>
+                  {selectedListing.aiRecommendation}
+                </div>
+              )}
+
+              {selectedListing.aiVisibleIssues && selectedListing.aiVisibleIssues.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Visible Issues:</span>
+                  <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
+                    {selectedListing.aiVisibleIssues.map((iss, idx) => (
+                      <li key={idx}>{iss}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selectedListing.aiAnalyzedAt && (
+                <div className="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800/60">
+                  <span>Analyzed: {new Date(selectedListing.aiAnalyzedAt).toLocaleString()}</span>
+                  {selectedListing.aiImageQuality && <span>Photo Quality: {selectedListing.aiImageQuality}</span>}
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
+                <Button
+                  onClick={async () => {
+                    if (!selectedListing) return;
+                    setIsModerating(true);
+                    try {
+                      const res = await api.verifyListingCondition(selectedListing.id, true);
+                      if (res.success && res.data) {
+                        setSelectedListing((prev) => prev ? {
+                          ...prev,
+                          aiCondition: res.data.estimatedCondition,
+                          aiConfidence: res.data.confidence,
+                          aiVerificationStatus: res.data.verificationStatus,
+                          aiVisibleIssues: res.data.visibleIssues,
+                          aiImageQuality: res.data.imageQuality,
+                          aiRecommendation: res.data.recommendation,
+                          aiAnalyzedAt: res.data.analyzedAt,
+                        } : null);
+                        fetchListings(pagination.page);
+                      }
+                    } finally {
+                      setIsModerating(false);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  disabled={isModerating}
+                  className="h-7 text-xs border-slate-700 text-slate-300 hover:text-white"
+                >
+                  <RefreshCw className={`h-3 w-3 mr-1 ${isModerating ? 'animate-spin' : ''}`} />
+                  {isModerating ? 'Re-analyzing...' : 'Re-analyze with AI'}
+                </Button>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setInspectModalOpen(false)}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs border-emerald-800 text-emerald-400 hover:bg-emerald-950/60"
+                  >
+                    Keep Listing
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setInspectModalOpen(false);
+                      handleOpenModModal(selectedListing);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs border-rose-800 text-rose-400 hover:bg-rose-950/60"
+                  >
+                    Moderate Listing
+                  </Button>
+                </div>
               </div>
             </div>
 

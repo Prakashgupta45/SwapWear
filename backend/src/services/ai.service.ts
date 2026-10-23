@@ -59,7 +59,7 @@ export class AiService {
     }
 
     const provider = (env.AI_PROVIDER || 'gemini').toLowerCase();
-    const model = env.AI_MODEL || (provider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash');
+    const model = env.AI_MODEL || (provider === 'openai' ? 'gpt-4o-mini' : 'gemini-3.1-flash-lite');
 
     const systemPrompt = `You are the SwapWear AI Fashion Matching Assistant.
 Your task is to analyze candidate clothing listings and rank their swap compatibility for this specific user.
@@ -94,10 +94,16 @@ CRITICAL RULES:
       }
 
       // Clean markdown code blocks if the model included any
-      const cleanedJson = rawResponseText
+      let cleanedJson = rawResponseText
         .replace(/```json/gi, '')
         .replace(/```/g, '')
         .trim();
+
+      const firstBrace = cleanedJson.indexOf('{');
+      const lastBrace = cleanedJson.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        cleanedJson = cleanedJson.substring(firstBrace, lastBrace + 1);
+      }
 
       const parsed = JSON.parse(cleanedJson);
       const validated = aiRecommendationResponseSchema.safeParse(parsed);
@@ -130,54 +136,72 @@ CRITICAL RULES:
    */
   private static async callGemini(
     apiKey: string,
-    model: string,
+    requestedModel: string,
     systemPrompt: string,
     userPrompt: string
   ): Promise<string> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-      model
-    )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const candidateModels = [
+      requestedModel,
+      'gemini-3.1-flash-lite',
+      'gemini-flash-latest',
+    ].filter((m, idx, arr): m is string => Boolean(m) && arr.indexOf(m) === idx);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
+    let lastError: Error | null = null;
 
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }],
+    for (const model of candidateModels) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+        model
+      )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
           },
-          contents: [
-            {
-              parts: [{ text: userPrompt }],
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }],
             },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: 'application/json',
-          },
-        }),
-        signal: controller.signal,
-      });
+            contents: [
+              {
+                parts: [{ text: userPrompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: 'application/json',
+            },
+          }),
+          signal: controller.signal,
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        const errorBody = await res.text();
-        throw new Error(`Gemini HTTP ${res.status}: ${errorBody.slice(0, 200)}`);
+        if (!res.ok) {
+          const errorBody = await res.text();
+          console.warn(`[AiService] Model ${model} returned HTTP ${res.status}: ${errorBody.slice(0, 150)}`);
+          lastError = new Error(`Gemini HTTP ${res.status}: ${errorBody.slice(0, 150)}`);
+          continue;
+        }
+
+        const json = await res.json();
+        const parts = json?.candidates?.[0]?.content?.parts || [];
+        const content = parts.map((p: { text?: string }) => p.text || '').join('').trim();
+        return content || '';
+      } catch (err) {
+        clearTimeout(timeoutId);
+        lastError = err instanceof Error ? err : new Error(String(err));
+        console.warn(`[AiService] Model ${model} failed: ${lastError.message}`);
+        continue;
       }
-
-      const json = await res.json();
-      const content = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-      return content || '';
-    } catch (err) {
-      clearTimeout(timeoutId);
-      throw err;
     }
+
+    throw lastError || new Error('No available Gemini model could process the request');
   }
 
   /**

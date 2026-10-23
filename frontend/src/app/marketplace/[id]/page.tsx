@@ -16,11 +16,14 @@ import {
   MapPin,
   Loader2,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 
 import { CURATED_SHOWCASE_LISTINGS } from '../../../lib/curatedListings';
 import { SwapRequestModal } from '../../../components/SwapRequestModal';
 import SmartMatchSection from '../../../components/SmartMatchSection';
+import { AiConditionCard } from '../../../components/AiConditionCard';
+import { ConditionVerificationResult } from '../../../types/listing';
 
 export default function MarketplaceListingDetailPage() {
   const params = useParams();
@@ -32,6 +35,9 @@ export default function MarketplaceListingDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState<boolean>(false);
   const [swapTargetListing, setSwapTargetListing] = useState<ClothingListing | null>(null);
+  const [isReanalyzing, setIsReanalyzing] = useState<boolean>(false);
+  const [assessment, setAssessment] = useState<any>(null);
+  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +48,28 @@ export default function MarketplaceListingDetailPage() {
         setIsLoading(true);
         const res = await api.getListingById(listingId);
         if (res.success && res.data?.listing) {
-          setListing(res.data.listing);
+          const item = res.data.listing;
+          setListing(item);
+          if (item.aiCondition || (item.aiVerificationStatus && item.aiVerificationStatus !== 'NOT_ANALYZED')) {
+            setAssessment({
+              verificationAvailable: Boolean(item.aiCondition && item.aiConfidence !== null),
+              listingId: item.id,
+              declaredCondition: item.condition,
+              estimatedCondition: item.aiCondition || null,
+              confidence: item.aiConfidence ?? null,
+              visibleIssues: item.aiVisibleIssues || [],
+              imageQuality: item.aiImageQuality || 'GOOD',
+              recommendation:
+                item.aiRecommendation ||
+                `Condition appears consistent with ${item.aiCondition?.replace('_', ' ') || 'the garment'}.`,
+              mismatch: item.aiVerificationStatus !== 'CONSISTENT',
+              differenceLevels: 0,
+              verificationStatus: item.aiVerificationStatus || 'CONSISTENT',
+              analyzedAt: item.aiAnalyzedAt || null,
+              notice:
+                'AI-generated estimate based on uploaded images. Final condition depends on user/admin review.',
+            });
+          }
           return;
         }
       } catch (err: any) {
@@ -215,6 +242,116 @@ export default function MarketplaceListingDetailPage() {
                 </Badge>
               </div>
             </div>
+
+            {/* Phase 9: AI Condition Assessment */}
+            {assessment ? (
+              <div className="space-y-2">
+                <AiConditionCard
+                  assessment={assessment}
+                  canReanalyze={Boolean(isOwner || (user && user.role === 'ADMIN'))}
+                  isReanalyzing={isReanalyzing}
+                  onReanalyze={async () => {
+                    if (!listing) return;
+                    setIsReanalyzing(true);
+                    setAnalysisNotice(null);
+                    try {
+                      const startTime = Date.now();
+                      const res = await api.verifyListingCondition(listing.id, true);
+                      const elapsed = Date.now() - startTime;
+                      if (elapsed < 500) {
+                        await new Promise((r) => setTimeout(r, 500 - elapsed));
+                      }
+                      if (res.success && res.data) {
+                        setAssessment(res.data);
+                        setListing((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                aiCondition: res.data.estimatedCondition,
+                                aiConfidence: res.data.confidence,
+                                aiVerificationStatus: res.data.verificationStatus,
+                                aiVisibleIssues: res.data.visibleIssues,
+                                aiImageQuality: res.data.imageQuality,
+                                aiRecommendation: res.data.recommendation,
+                                aiAnalyzedAt: res.data.analyzedAt,
+                              }
+                            : null
+                        );
+                        if (!res.data.verificationAvailable) {
+                          setAnalysisNotice(
+                            res.data.recommendation ||
+                            'Re-analysis checked: AI vision is not yet configured with an API key. Add AI_API_KEY in backend/.env to run live image analysis.'
+                          );
+                        } else {
+                          setAnalysisNotice('AI condition analysis completed successfully!');
+                        }
+                      }
+                    } catch (e: any) {
+                      setAnalysisNotice(e.message || 'Re-analysis failed');
+                    } finally {
+                      setIsReanalyzing(false);
+                    }
+                  }}
+                />
+                {analysisNotice && (
+                  <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200 font-medium">
+                    {analysisNotice}
+                  </p>
+                )}
+              </div>
+            ) : isOwner || (user && user.role === 'ADMIN') ? (
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 block">AI Condition Check</span>
+                    <span className="text-[11px] text-slate-500">Run assistive visual condition analysis on this item</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isReanalyzing}
+                    onClick={async () => {
+                      if (!listing) return;
+                      setIsReanalyzing(true);
+                      setAnalysisNotice(null);
+                      try {
+                        const res = await api.verifyListingCondition(listing.id, true);
+                        if (res.success && res.data) {
+                          setAssessment(res.data);
+                          setListing((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  aiCondition: res.data.estimatedCondition,
+                                  aiConfidence: res.data.confidence,
+                                  aiVerificationStatus: res.data.verificationStatus,
+                                  aiVisibleIssues: res.data.visibleIssues,
+                                  aiImageQuality: res.data.imageQuality,
+                                  aiRecommendation: res.data.recommendation,
+                                  aiAnalyzedAt: res.data.analyzedAt,
+                                }
+                              : null
+                          );
+                        }
+                      } catch (e: any) {
+                        setAnalysisNotice(e.message || 'Analysis could not be completed.');
+                      } finally {
+                        setIsReanalyzing(false);
+                      }
+                    }}
+                    className="h-8 text-xs bg-white text-forest-700 hover:text-forest-800"
+                  >
+                    <Sparkles className={`h-3.5 w-3.5 mr-1.5 ${isReanalyzing ? 'animate-spin' : ''}`} />
+                    {isReanalyzing ? 'Analyzing...' : 'Analyze Condition'}
+                  </Button>
+                </div>
+                {analysisNotice && (
+                  <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
+                    {analysisNotice}
+                  </p>
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* Action CTAs */}

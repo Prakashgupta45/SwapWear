@@ -69,6 +69,13 @@ export interface AdminListing {
   condition: string;
   estimatedSwapValue: number | null;
   status: 'AVAILABLE' | 'RESERVED' | 'SWAPPED';
+  aiCondition?: string | null;
+  aiConfidence?: number | null;
+  aiVerificationStatus?: string | null;
+  aiVisibleIssues?: string[];
+  aiImageQuality?: string | null;
+  aiRecommendation?: string | null;
+  aiAnalyzedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   owner: {
